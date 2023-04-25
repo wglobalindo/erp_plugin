@@ -1,0 +1,30 @@
+ImportpropalLinesInfo=Informations sur le module "Importation de lignes dans les propales"
+ImportpropalLines=Importer des lignes de propale
+SelectFileToImport=Choisissez le fichier que vous voulez importer
+UploadFileError=Il y a eu un problème avec le fichier chargé
+UploadFileErrorUnsupportedFormat=Le fichier chargé n'a pas un format valide
+UploadFileErrorFormat=Le fichier téléchargé ne correspond pas au format de document attendu
+ErrorProductNotFound=Produit avec ref %s non trouvé
+ErrorAddpropaleLine=Erreur en essayant d'ajouter le produit %s à la commande
+ErrorZipExtensionNotAvailable=L'extension Zip est nécessaire et n'est pas disponible sur ce serveur.
+
+#Admin page
+ImportpropalLinesTitle=Importer un fichier
+ImportpropalLinesInfoFormat=Le fichier d'importation est un tableur qui a le format suivant :
+ImportpropalLinesInfoFormatA=Colonne A: %s
+ImportpropalLinesInfoFormatB=Colonne B: %s
+ImportpropalLinesInfoFormatC=Colonne C: %s
+ImportpropalLinesInfoFormatD=Colonne D: %s
+ImportpropalLinesInfoFormatMore=La première ligne contient l'en-tête de colonne dans la langue configurée dans Dolibarr. Le reste des colonnes sera ignoré.
+ImportpropalLinesInfoFormatCreate=Pour générer le fichier d'importation, accédez aux %s %s %s %s et sélectionnez les entrées "%s".
+ImportpropalLinesInfoFormatCreate2= et "%s". Sélectionnez le format CSV, Excel 2007 ou Excel 95 puis éditez le fichier pour ajouter la colonne "%s".
+ImportpropalLinesInfoFormatExample=Le résultat final devrait ressembler à ce qui suit :
+ImportpropalLinesInfoFormatExampleImgSrc=example-en_US.png
+ImportpropalLinesInfoParticularites=A la différence du module intial orderline, vous devez ajouter une colonne PU ht qui permet de forcer le prix du produit ou du service
+ImportpropalLinesInfoLibelleCol=En français, les intitulés de colonnes doivent être : Réf. | Libellé | Qté | PU ht
+ImportpropalLinesInfoFormatExampleImgAlt=Exemple d'importation
+ImportpropalLinesInfoUsing=Comment ça marche
+ImportpropalLinesInfoUsingpropal=Les clients doivent remplir les quantités qu'ils veulent deviser dans le fichier de devis. Ensuite nous créons un devis client et cliquons sur le bouton "%s", puis nous chargeons le fichier de devis et tous les produits avec une quantité supérieure ou égale à 1 seront ajoutés.
+ImportpropalLinesAbout=À propos de
+ImportpropalLinesAuthor=Module développé par Julien Marchand - %s à partir du module %s développé par Marcos García de La Fuente %s.
+ImportpropalLinesContact=Si vous rencontrez des problèmes avec le module, vous pouvez me contacter à julien.marchand@iouston.com
