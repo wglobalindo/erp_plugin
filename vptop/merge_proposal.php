@@ -686,21 +686,13 @@ if (($action != 'create' && $action != 'add') || ($action == 'create' && $error)
 		}
 
 		print '<table class="noborder" width="100%">';
-		print '<tr class="liste_titre">';
-		print_liste_field_titre('Ref',$_SERVER["PHP_SELF"],'c.ref','','&amp;socid='.$socid,'',$sortfield,$sortorder);
-		print_liste_field_titre('RefCustomerOrder',$_SERVER["PHP_SELF"],'c.ref_client','','&amp;socid='.$socid,'',$sortfield,$sortorder);
-		print_liste_field_titre('OrderDate',$_SERVER["PHP_SELF"],'c.date_valid','','&amp;socid='.$socid, 'align="center"',$sortfield,$sortorder);
-		print_liste_field_titre('DeliveryDate',$_SERVER["PHP_SELF"],'c.fin_validite','','&amp;socid='.$socid, 'align="center"',$sortfield,$sortorder);
-		print_liste_field_titre('Detail',$_SERVER["PHP_SELF"],'ef.ds','','&amp;socid='.$socid, 'align="center"',$sortfield,$sortorder);
-		print_liste_field_titre('Status',$_SERVER["PHP_SELF"],'c.fk_statut','','&amp;search_status='.$search_status,'align="center"',$sortfield,$sortorder);
-		print_liste_field_titre('','','','','','align="center"');
-		print '</tr>';
 
 		// Lignes des champs de filtre
 		print '<form method="get" action="merge_proposal.php">';
 		print '<input type="hidden" name="socid" value="'.$socid.'">';
 		print '<tr class="liste_titre">';
 		print '<td class="liste_titre">';
+
 		//REF
 		print '<input class="flat" size="10" type="text" name="sref" value="'.$sref.'">';
 		print '</td>';
@@ -719,6 +711,10 @@ if (($action != 'create' && $action != 'add') || ($action == 'create' && $error)
 		print $periodely;
 		print '</td>';
 
+			// Amount HT
+		print '<td class="liste_titre" align="center">';
+		print '</td>';
+
         //Detail
 		print '<td class="liste_titre" align="center">';
 		print '<input class="flat" type="text" name="search_options_ds" value="'.$sdetail.'">';
@@ -730,24 +726,30 @@ if (($action != 'create' && $action != 'add') || ($action == 'create' && $error)
 		print '</td>';
 
 		//SEARCH BUTTON
-		/*print '<td align="right" class="liste_titre">';
+		print '<td align="center" class="liste_titre">';
 		print '<input type="image" class="liste_titre" name="button_search" src="'.img_picto($langs->trans("Search"),'search.png','','',1).'"  value="'.dol_escape_htmltag($langs->trans("Search")).'" title="'.dol_escape_htmltag($langs->trans("Search")).'">';
-        print '</td>';*/
+        print '</td>';
+		print '</tr>';
+		print '<tr class="liste_titre">';
+
+		// Title 
+		print_liste_field_titre('Ref',$_SERVER["PHP_SELF"],'c.ref','','&amp;socid='.$socid,'',$sortfield,$sortorder);
+		print_liste_field_titre('RefCustomerOrder',$_SERVER["PHP_SELF"],'c.ref_client','','&amp;socid='.$socid,'',$sortfield,$sortorder);
+		print_liste_field_titre('OrderDate',$_SERVER["PHP_SELF"],'c.date_valid','','&amp;socid='.$socid, 'align="center"',$sortfield,$sortorder);
+		print_liste_field_titre('DeliveryDate',$_SERVER["PHP_SELF"],'c.fin_validite','','&amp;socid='.$socid, 'align="center"',$sortfield,$sortorder);
+		print_liste_field_titre('AmountHT',$_SERVER["PHP_SELF"],'c.total_ht','','&amp;socid='.$socid, 'align="right"',$sortfield,$sortorder);
+		print_liste_field_titre('Detail',$_SERVER["PHP_SELF"],'ef.ds','','&amp;socid='.$socid, 'align="center"',$sortfield,$sortorder);
+		print_liste_field_titre('Status',$_SERVER["PHP_SELF"],'c.fk_statut','','&amp;search_status='.$search_status,'align="right"',$sortfield,$sortorder);
 
 		//ALL/NONE
 		print '<td align="center" class="liste_titre">';
-        print '<input type="image" class="liste_titre" name="button_search" src="'.img_picto($langs->trans("Search"),'search.png','','',1).'"  value="'.dol_escape_htmltag($langs->trans("Search")).'" title="'.dol_escape_htmltag($langs->trans("Search")).'">';
 		if ($conf->use_javascript_ajax) print '<a href="#" id="checkall">'.$langs->trans("All").'</a> / <a href="#" id="checknone">'.$langs->trans("None").'</a>';
 		print '</td>';
-
 		print '</tr>';
 		print '</form>';
 
 		print '<form name="orders2invoice" action="merge_proposal.php" method="GET">';
 		
-        
-
-
 		while ($i < $num)
 		{
 			$objp = $db->fetch_object($resql);
@@ -795,6 +797,9 @@ if (($action != 'create' && $action != 'add') || ($action == 'create' && $error)
 			print dol_print_date($db->jdate($objp->fin_validite),'day');
 			print '</td>';
             
+			// Amount HT
+			print '<td class="nowrap right">'.price($objp->total_ht)."</td>\n";
+
             //Detail
 			print '<td align="center" class="nowrap">';
 			print $generic_commande->array_options['options_ds'];
