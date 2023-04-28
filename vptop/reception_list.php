@@ -60,6 +60,7 @@ $result = restrictedArea($user, 'reception', $receptionid, '');
 $diroutputmassaction = $conf->reception->dir_output.'/temp/massgeneration/'.$user->id;
 
 $search_ref_rcp = GETPOST("search_ref_rcp");
+$search_supplier_order = GETPOST('search_supplier_order');
 $search_ref_liv = GETPOST('search_ref_liv');
 $search_ref_supplier = GETPOST('search_ref_supplier');
 $search_company = GETPOST("search_company");
@@ -109,6 +110,7 @@ if (empty($user->socid)) $fieldstosearchall["e.note_private"] = "NotePrivate";
 $checkedtypetiers = 0;
 $arrayfields = array(
 	'e.ref'=>array('label'=>$langs->trans("Ref"), 'checked'=>1),
+	'commande_fournisseur_ref'=>array('label'=>$langs->trans("Ref. vender order"), 'checked'=>1),
 	'e.ref_supplier'=>array('label'=>$langs->trans("RefSupplier"), 'checked'=>1),
 	's.nom'=>array('label'=>$langs->trans("ThirdParty"), 'checked'=>1),
 	's.town'=>array('label'=>$langs->trans("Town"), 'checked'=>1),
@@ -149,6 +151,7 @@ if (GETPOST('button_removefilter_x', 'alpha') || GETPOST('button_removefilter.x'
 {
 	$search_ref_supplier = '';
 	$search_ref_rcp = '';
+	$search_supplier_order = '';
 	$search_ref_liv = '';
 	$search_company = '';
 	$search_town = '';
@@ -543,6 +546,7 @@ if ($search_state) $sql .= natural_search("state.nom", $search_state);
 if ($search_country) $sql .= " AND s.fk_pays IN (".$search_country.')';
 if ($search_type_thirdparty) $sql .= " AND s.fk_typent IN (".$search_type_thirdparty.')';
 if ($search_ref_rcp) $sql .= natural_search('e.ref', $search_ref_rcp);
+if ($search_supplier_order) $sql .= natural_search('c.ref', $search_supplier_order);
 if ($search_ref_liv) $sql .= natural_search('l.ref', $search_ref_liv);
 if ($search_company) $sql .= natural_search('s.nom', $search_company);
 if ($search_ref_supplier) $sql .= natural_search('e.ref_supplier', $search_ref_supplier);
@@ -592,6 +596,7 @@ if ($resql)
 	if ($limit > 0 && $limit != $conf->liste_limit) $param .= '&limit='.urlencode($limit);
 	if ($sall) $param .= "&amp;sall=".urlencode($sall);
 	if ($search_ref_rcp) $param .= "&amp;search_ref_rcp=".urlencode($search_ref_rcp);
+	if ($search_supplier_order) $param .= "&amp;search_supplier_order=".urlencode($search_supplier_order);
 	if ($search_ref_liv) $param .= "&amp;search_ref_liv=".urlencode($search_ref_liv);
 	if ($search_company) $param .= "&amp;search_company=".urlencode($search_company);
 	if ($optioncss != '') $param .= '&amp;optioncss='.urlencode($optioncss);
@@ -712,14 +717,20 @@ if ($resql)
 	if (!empty($arrayfields['e.ref']['checked']))
 	{
 		print '<td class="liste_titre">';
-		print '<input class="flat" size="6" type="text" name="search_ref_rcp" value="'.$search_ref_rcp.'">';
-		print '</td>';
-		print '<td class="liste_titre">';
-		print '<input class="flat" size="6" type="text" name="search_ref_rcp" value="'.$search_ref_rcp.'">';
+		print '<input class="flat" size="10" type="text" name="search_ref_rcp" value="'.$search_ref_rcp.'">';
 		print '</td>';
 		
 	}
-	// Ref customer
+
+	// Ref supplier order
+	if (!empty($arrayfields['commande_fournisseur_ref']['checked']))
+	{
+		print '<td class="liste_titre">';
+		print '<input class="flat" size="10" type="text" name="search_supplier_order" value="'.$search_supplier_order.'">';
+		print '</td>';
+		
+	}
+	// Ref supplier
 	if (!empty($arrayfields['e.ref_supplier']['checked']))
 	{
 		print '<td class="liste_titre">';
@@ -819,7 +830,7 @@ if ($resql)
 
 	print '<tr class="liste_titre">';
 	if (!empty($arrayfields['e.ref']['checked']))            print_liste_field_titre($arrayfields['e.ref']['label'], $_SERVER["PHP_SELF"], "e.ref", "", $param, '', $sortfield, $sortorder);
-	if (!empty($arrayfields['e.ref']['checked']))            print_liste_field_titre($arrayfields['e.ref']['label'], $_SERVER["PHP_SELF"], "e.ref", "", $param, '', $sortfield, $sortorder);
+	if (!empty($arrayfields['commande_fournisseur_ref']['checked']))            print_liste_field_titre($arrayfields['commande_fournisseur_ref']['label'], $_SERVER["PHP_SELF"], "commande_fournisseur_ref", "", $param, '', $sortfield, $sortorder);
 	if (!empty($arrayfields['e.ref_supplier']['checked']))   print_liste_field_titre($arrayfields['e.ref_supplier']['label'], $_SERVER["PHP_SELF"], "e.ref_supplier", "", $param, '', $sortfield, $sortorder);
 	if (!empty($arrayfields['s.nom']['checked']))            print_liste_field_titre($arrayfields['s.nom']['label'], $_SERVER["PHP_SELF"], "s.nom", "", $param, '', $sortfield, $sortorder, 'left ');
 	if (!empty($arrayfields['s.town']['checked']))           print_liste_field_titre($arrayfields['s.town']['label'], $_SERVER["PHP_SELF"], 's.town', '', $param, '', $sortfield, $sortorder);
@@ -864,13 +875,14 @@ if ($resql)
 		if (!empty($arrayfields['e.ref']['checked']))
 		{
 			print "<td>";
-			//print $reception->getNomUrl(1);
-			print "<a href='/custom/vptop/reception_card.php?id=$reception->id' title='<span class=&quot;fas fa-dolly flip&quot; style=&quot; color: #a69944;&quot;></span> <u>Reception</u><br><b>Ref.:$reception->ref</b><br><b>Ref. vendor:</b> ' class='classfortooltip'>$reception->ref</a>";
-			$filename = dol_sanitizeFileName($reception->ref);
-			$filedir = $conf->reception->dir_output.'/'.dol_sanitizeFileName($reception->ref);
-			$urlsource = $_SERVER['PHP_SELF'].'?id='.$reception->id;
-			print $formfile->getDocumentsLink($reception->element, $filename, $filedir);
+			print $reception->getNomUrl(1);
 			print "</td>\n";
+			if (!$i) $totalarray['nbfield']++;
+		}
+
+		// Ref ref_supplier_order
+		if (!empty($arrayfields['commande_fournisseur_ref']['checked']))
+		{
 			print "<td>";
 			if ($obj->commande_fournisseur_id > 0)
 			{
@@ -879,11 +891,10 @@ if ($resql)
 				print $orderstatic->getNomUrl(1);
 			} else print '&nbsp;';
 			print "</td>\n";
-
 			if (!$i) $totalarray['nbfield']++;
 		}
 
-		// Ref customer
+		// Ref supplier
 		if (!empty($arrayfields['e.ref_supplier']['checked']))
 		{
 			print "<td>";
