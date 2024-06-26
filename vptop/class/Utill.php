@@ -46,12 +46,15 @@ require_once DOL_DOCUMENT_ROOT.'/core/class/extrafields.class.php';
 
 class Utill extends Propal
 {
-    
-    
+   	public function __construct($db, $socid = 0, $propalid = 0)
+	{
+        parent::__construct($db, $socid = 0, $propalid = 0);
+	}
+
     public function createFromClone2(User $user, $socid = 0, $forceentity = null,$id)
 	{
 		global $conf, $hookmanager, $origin, $originid;
-        
+
         $this->id =$id;
 
 		dol_include_once('/projet/class/project.class.php');
@@ -125,7 +128,7 @@ class Utill extends Propal
 		$element = 'supplier_proposal';
 		$subelement = 'supplier_proposal';
 
-		
+
 		$object->origin = $origin;
 		$object->origin_id = $originid;
 
@@ -146,7 +149,7 @@ class Utill extends Propal
 		    $error++;
 		}
 
-		
+
 		/*if (!$error)
 		{
 			// copy internal contacts
@@ -185,7 +188,7 @@ class Utill extends Propal
 		{
 			$this->db->commit();
 			return $object->id;
-			
+
 		}
 		else
 		{
@@ -193,7 +196,7 @@ class Utill extends Propal
 			return -1;
 		}
 	}
-    
+
     function fetch2($rowid,$ref='')
 	{
 			$sql = "SELECT p.rowid, p.entity, p.ref, p.remise, p.remise_percent, p.remise_absolue, p.fk_soc";
@@ -354,7 +357,7 @@ class Utill extends Propal
 	{
 		$this->lines=array();
 
-		
+
 
 
 			$sql = "SELECT d.rowid, d.fk_supplier_proposal, d.fk_parent_line, d.label as custom_label, d.description, d.price, d.tva_tx, d.localtax1_tx, d.localtax2_tx, d.qty, d.fk_remise_except, d.remise_percent, d.subprice, d.fk_product,";
@@ -450,7 +453,7 @@ class Utill extends Propal
 					$line->pa_ht 			= $objp->total_ht/$objp->qty;
 					$line->subprice 		= $objp->total_ht/$objp->qty*1.5;
 					//$line->fk_propal		= "";
-					
+
 
 					$table_element = "supplier_proposaldet";
 
@@ -463,7 +466,7 @@ class Utill extends Propal
                     $line->array_options['options_spd']=$objp->remise_percent;
                     //$line->array_options['options_unit']=$objp->fetch_optionals['options_unit'];
                     //$line->fetch_optionals();
-					//print $line->array_options['options_unit']; 
+					//print $line->array_options['options_unit'];
 					//print_r($line->array_options);
 				}
 				else{
@@ -487,13 +490,13 @@ class Utill extends Propal
 			return -3;
 		}
 	}
-   
+
 }
 /**
  *	Class to manage commercial proposal lines
  */
 class PropaleLigne2 extends PropaleLigne
-{ 
+{
     // phpcs:disable PEAR.NamingConventions.ValidFunctionName.ScopeNotCamelCaps
 	/**
 	 *  Function to get extra fields of an object into $this->array_options
@@ -506,7 +509,7 @@ class PropaleLigne2 extends PropaleLigne
 	 */
 	public function fetch2_optionals($rowid = null, $optionsArray = null, $table_element = Null)
 	{
-		
+
 		// phpcs:enable
 		global $conf, $extrafields;
 
@@ -539,20 +542,20 @@ class PropaleLigne2 extends PropaleLigne
 				$extrafields->fetch_name_optionals_label($table_element);
 			}
 			$optionsArray = (!empty($extrafields->attributes[$table_element]['label']) ? $extrafields->attributes[$table_element]['label'] : null);
-			
+
 		} else {
 			global $extrafields;
 			dol_syslog("Warning: fetch_optionals was called with param optionsArray defined when you should pass null now", LOG_WARNING);
 		}
 
-		
+
 
 		if ($table_element == 'categorie') $table_element = 'categories'; // For compatibility
 
 		// Request to get complementary values
 		if (is_array($optionsArray) && count($optionsArray) > 0)
 		{
-			
+
 			$sql = "SELECT rowid";
 			foreach ($optionsArray as $name => $label)
 			{
@@ -778,7 +781,7 @@ class Commande2 extends Commande
 
 		$this->tpl['qty'] = (($line->info_bits & 2) != 2) ? $line->qty : '&nbsp;';
 		if (!empty($conf->global->PRODUCT_USE_UNITS)) $this->tpl['unit'] = $langs->transnoentities($line->getLabelOfUnit('long'));
-		
+
 		$this->tpl['remise_percent'] = (($line->info_bits & 2) != 2) ? vatrate($line->array_options['options_spd'], true) : '&nbsp;';
 
 		// Is the line strike or not
@@ -874,7 +877,7 @@ class SupplierProposal2 extends SupplierProposal
 				$txtva = preg_replace('/\s*\(.*\)/', '', $txtva); // Remove code into vatrate.
 			}
 
-			
+
 
 			$tabprice = calcul_price_total($qty, $pu, $remise_percent, $txtva, $txlocaltax1, $txlocaltax2, 0, $price_base_type, $info_bits, $type, $this->thirdparty, $localtaxes_type, 100, $this->multicurrency_tx, $pu_ht_devise);
 			$total_ht  = $tabprice[0];

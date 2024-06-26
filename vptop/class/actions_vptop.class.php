@@ -79,7 +79,7 @@ class ActionsVPtoP
 	{
 		global $langs, $user;
 
-		
+
 		echo '<script>';
 		//supplier hide
 		if (!$user->rights->fournisseur->lire){
@@ -95,7 +95,7 @@ class ActionsVPtoP
 		echo 'var buying_price = $("input[name=buying_price]:first");';
 		echo '$("#buying_price").val(price2numjs(buying_price.val().replace(",","")));';
 		echo '</script>';
-		
+
 		//print '<div class="inline-block divButAction"><a class="butActionDelete" href="/custom/vptop/reception_card.php?action=create&origin=supplierorder&origin_id=' . $object->id . '&amp;socid=">' . $object->element . '</a></div>';
 
 		if ($object->element=='supplier_proposal') {
@@ -115,7 +115,7 @@ class ActionsVPtoP
 				print '<div class="inline-block divButAction"><a class="butActionDelete" href="/custom/vptop/merge_proposal.php?socid=' . $object->socid . '&amp;sref_client='. $object->ref_client . '">' . $langs->trans("Merge") . '</a></div>';
 				//print '<div class="inline-block divButAction"><a class="butActionDelete" href="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '&amp;socid=' . $object->socid . '&amp;action=new_sporder&amp;object=' . $object->element . '">' . $langs->trans("Supplier Order") . '</a></div>';
 
-				
+
 				return 0;
 			}
 		}
@@ -127,7 +127,7 @@ class ActionsVPtoP
 				print '<div class="inline-block divButAction"><a class="butActionDelete" href="/custom/vptop/merge.php?socid=' . $object->socid . '&amp;sref_client='. $object->ref_client . '">' . $langs->trans("Merge") . '</a></div>';
 				print '<div class="inline-block divButAction"><a class="butActionDelete" href="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '&amp;socid=' . $object->socid . '&amp;action=new_sporder&amp;object=' . $object->element . '">' . $langs->trans("Supplier Order") . '</a></div>';
 
-				
+
 				return 0;
 			}
 		}
@@ -136,7 +136,7 @@ class ActionsVPtoP
 			if ($object->statut > 0)
 			{
 				print '<div class="inline-block divButAction"><a class="butActionDelete" href="/custom/vptop/reception_card.php?action=create&origin=supplierorder&origin_id=' . $object->id . '&amp;socid=">' . $langs->trans("Reception") . '</a></div>';
-			
+
 				return 0;
 			}
 		}
@@ -146,7 +146,7 @@ class ActionsVPtoP
 				'presend'=>$langs->trans("SendByMail"),
 			);
 		}
-		
+
 	}
 	/**
 	 * @param   array         $parameters     Hook metadatas (context, etc...)
@@ -165,11 +165,11 @@ class ActionsVPtoP
 		echo '$("#select_type option:eq(1)").prop("selected", true);';
 		echo '$("#tva_tx option:eq(0)").prop("selected", true);';
 		echo 'jQuery("#dp_desc").focus();';
-		
+
 		//echo 'jQuery("tr>.commandedet_extras_spp").parent().css("display","none");';
 		//echo 'jQuery("tr>.commandedet_extras_spd").parent().css("display","none");';
 
-		//for no right supplier mangment 
+		//for no right supplier mangment
 		if (!$user->rights->fournisseur->lire){
 			echo 'jQuery("tr>.propaldet_extras_spp").parent().css("display","none");';
 			echo 'jQuery("tr>.propaldet_extras_spd").parent().css("display","none");';
@@ -208,7 +208,7 @@ class ActionsVPtoP
 				$this->resprints = $form->formconfirm('/comm/propal/card.php?origin=supplier_proposal&originid=' . $object->id.'&proposal_supplier=1','', $langs->trans('ConfirmClonePropal', $object->ref), 'new_customer_proposal', $formquestion, 'yes', 1);
 				//$this->resprints = $form->formconfirm('/custom/vptop/card.php?origin=supplier_proposal&originid=' . $object->id, $langs->trans('ClonePropal'), $langs->trans('ConfirmClonePropal', $object->ref), 'create', $formquestion, 'yes', 1);
 			}
-		}	
+		}
 		if ($object->element=='commande') {
 			// New Customer Proposal
 			if ($action == 'new_sporder') {
@@ -241,9 +241,9 @@ class ActionsVPtoP
 				// Paiement incomplet. On demande si motif = escompte ou autre
 				$this->resprints = $form->formconfirm('/custom/vptop/sporder.php?origin=commande&originid=' . $object->id, $langs->trans('ClonePropal'), $langs->trans('ConfirmClonePropal', $object->ref), 'create', $formquestion, 'yes', 1);
 			}
-		}	
-		
-		
+		}
+
+
 	}
 	/**
 	 * @param   array         $parameters     Hook metadatas (context, etc...)
@@ -268,7 +268,7 @@ class ActionsVPtoP
 					}
 				}
 			}
-		
+
 		}
 		if ($object->element=='propal') {
 
@@ -278,7 +278,7 @@ class ActionsVPtoP
 				foreach ($object->linkedObjectsIds['supplier_proposal'] as $key => $value)
 				{
 					$parameters['clonedObj']->add_object_linked("supplier_proposal", $value);
-					
+
 				}
 			}
 		}
@@ -295,37 +295,37 @@ class ActionsVPtoP
 		global $langs, $form, $conf, $ref, $rowid, $user, $socid, $forceentity, $db, $contextpage, $massactionbutton, $sortfield, $sortorder, $search_status, $massaction;
 		//if ($object->element=='') {
 		if ($contextpage=='supplierorderlist') {
-		
-			if ($massaction=="createbills") 
+
+			if ($massaction=="createbills")
 			{
 				$massaction = GETPOST('massaction', 'alpha');
 				$toselect = GETPOST('toselect', 'array');
-				
-				
-				
-				print '	
+
+
+
+				print '
 				<form id="input_form" method="POST" action="/custom/vptop/sporder_list.php">
 					<input type="hidden" name="massaction" value='.$massaction.'>';
 					foreach ($toselect as $key => $value) {
 						print '<input type="hidden" name="toselect[]" value='.$value.'>';
 					}
 
-				print '	
-					
+				print '
+
 					<input type="hidden" name="confirmmassaction" value="Confirm">
 					//<input type="hidden" name="sortfield" value="cf.date_creation">
 				</form>';
 				print '
- 
+
 				<script type="text/javascript">
 				this.document.getElementById("input_form").submit();
 
 				</script>';
-				
+
 				//print_r($toselect);
 
 			}
-			/*if (in_array('supplierorderlist', explode(':', $parameters['context']))) 
+			/*if (in_array('supplierorderlist', explode(':', $parameters['context'])))
 			{
 				if ($sortfield && $sortorder && $search_status){
 					//echo $search_status;
@@ -336,15 +336,15 @@ class ActionsVPtoP
 				}
 			}
 			if($action == 'classifyclose')
-			{			
-				
+			{
+
 				//setEventMessage($langs->trans("done"));
 				//header("Location: /custom/vptop/expedition_list.php");
 			}*/
 		}
 		if ($contextpage=='orderlist1') {
-			//if (in_array('createbills', explode(':', $parameters['massaction']))) 
-			/*if ($massaction=="createbills") 
+			//if (in_array('createbills', explode(':', $parameters['massaction'])))
+			/*if ($massaction=="createbills")
 			{
 				if ($sortfield && $sortorder && $search_status){
 					//echo $search_status;
@@ -354,7 +354,7 @@ class ActionsVPtoP
 					header("Location: /custom/vptop/sporder_list.php");
 				}
 			}*/
-			if ($massaction=="createbills") 
+			if ($massaction=="createbills")
 			{
 				/*$postdata = http_build_query(
 					array(
@@ -386,41 +386,41 @@ class ActionsVPtoP
 				header("Location: /custom/vptop/cmorder_list.php");
 
 
-			/*	
-				
-				print '	
+			/*
+
+				print '
 				<form id="input_form" method="POST" action="/custom/vptop/sporder_list.php">
 					<input type="hidden" name="massaction" value='.$massaction.'>';
 					foreach ($toselect as $key => $value) {
 						print '<input type="hidden" name="toselect[]" value='.$value.'>';
 					}
 
-				print '	
-					
+				print '
+
 					<input type="hidden" name="confirmmassaction" value="cf.date_creation">
 					<input type="hidden" name="sortfield" value="Confirm">
 				</form>';
 				print '
- 
+
 				<script type="text/javascript">
 				//this.document.getElementById("input_form").submit();
 
 				</script>';
-				
+
 				print_r($toselect);
 			*/
 
 			}
 
-			/*if ($massaction=="confirm_createsupplierbills") 
+			/*if ($massaction=="confirm_createsupplierbills")
 			{
 				print($mg_ref_supplier);
 				print("test");
 				exit;
 			}*/
 			if($action == 'classifyclose')
-			{			
-				
+			{
+
 				//setEventMessage($langs->trans("done"));
 				//header("Location: /custom/vptop/expedition_list.php");
 			}
@@ -433,7 +433,7 @@ class ActionsVPtoP
 			}
 				print $massaction;
 
-			if ($massaction=="createbills") 
+			if ($massaction=="createbills")
 			{
 
 				unset($_SESSION[massaction]);
@@ -444,23 +444,23 @@ class ActionsVPtoP
 				$toselect=$_SESSION[toselect];
 				$orders=$_SESSION[toselect];
 				$sortfield=$_SESSION[sortfield];
-				
+
 				$confirmmassaction=$_SESSION[confirmmassaction];
 				//$massaction = GETPOST('massaction', 'alpha');
 			}
-			if ($massaction=="confirm_createsupplierbills") 
+			if ($massaction=="confirm_createsupplierbills")
 			{
 				print($mg_ref_supplier);
 				print("test");
 			//	exit;
 			}
-		
-			
+
+
 			print_r($toselect);
 		}
 		if ($contextpage=='shipmentlist') {
-			
-			if (in_array('shipmentlist', explode(':', $parameters['context']))) 
+
+			if (in_array('shipmentlist', explode(':', $parameters['context'])))
 			{
 				if ($sortfield && $sortorder && $search_status){
 					//echo $search_status;
@@ -471,8 +471,8 @@ class ActionsVPtoP
 				}
 			}
 			if($action == 'classifyclose')
-			{			
-				
+			{
+
 				//setEventMessage($langs->trans("done"));
 				//header("Location: /custom/vptop/expedition_list.php");
 			}
@@ -482,11 +482,11 @@ class ActionsVPtoP
 				'presend'=>$langs->trans("SendByMail"),
 			   );
 
-		}	
+		}
 		if ($object->element=='supplier_proposal') {
 			//print $parameters['context'];
-			
-			if (in_array('supplier_proposalcard', explode(':', $parameters['context'])) && empty($contextpage)) 
+
+			if (in_array('supplier_proposalcard', explode(':', $parameters['context'])) && empty($contextpage))
 			{
 				if(!empty($object->id))
 				{
@@ -502,7 +502,7 @@ class ActionsVPtoP
 			//header("Location: /");
 			//header("Location: '.DOL_URL_ROOT.'/custom/vptop/reception_card.php?id='.$object->id");
 			//`print $object->id;
-			if (in_array('receptioncard', explode(':', $parameters['context']))) 
+			if (in_array('receptioncard', explode(':', $parameters['context'])))
 			{
 				header("Location: /custom/vptop/reception_card.php?id=$object->id");
 			}
@@ -524,7 +524,7 @@ class ActionsVPtoP
 				$companystatic = new Societe($db);
 				if (!empty($conf->projet->enabled)) { $formproject = new FormProjets($db); }
 
-				
+
 
 				$now = dol_now();
 				$currency_code = $conf->currency;
@@ -977,7 +977,8 @@ class ActionsVPtoP
 								}
 							}
 						}
-						$result = Utill::createFromClone2($user, $socid, (GETPOSTISSET('entity') ? GETPOST('entity', 'int') : null),$object->id);
+						$util = new Utill($db);
+						$result = $util->createFromClone2($user, $socid, (GETPOSTISSET('entity') ? GETPOST('entity', 'int') : null),$object->id);
 						if ($result > 0) {
 							header("Location: ".$_SERVER['PHP_SELF'].'?id='.$result);
 							exit();
@@ -987,17 +988,17 @@ class ActionsVPtoP
 						}
 					}
 				}
-				 
+
 
 			}
-			
-			
-			
+
+
+
 		}
 		/*if ($object->element=='invoice_supplier') {
 
 			if ($action == "create" && GETPOST('origin') == "order_supplier" && GETPOST('originid')  && empty($cancel) && $id > 0){
-				
+
 				require_once DOL_DOCUMENT_ROOT.'/fourn/class/fournisseur.commande.class.php';
 				$srcobject =  new CommandeFournisseur($db);
 				$srcobject->fetch(GETPOST('originid'));
@@ -1022,7 +1023,7 @@ class ActionsVPtoP
 	 */
 	public function printFieldPreListTitle(array $parameters, &$object, &$action, HookManager $hookmanager){
 		global $langs, $form, $conf, $ref, $rowid, $user, $socid, $forceentity, $db, $contextpage;
-	
+
 
 		if ($contextpage=='receptionlist') {
 			$arrayofmassactions = array(
@@ -1034,5 +1035,5 @@ class ActionsVPtoP
 
 		}
 	}
-	
+
 }
