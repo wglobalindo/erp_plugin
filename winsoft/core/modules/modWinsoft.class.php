@@ -45,7 +45,7 @@ class modWinsoft extends DolibarrModules
 		$this->descriptionlong = "WinsoftDescription";
 		$this->editor_name = 'W Global Indo';
 		$this->editor_url = '';
-		$this->version = '24.0.2-1';
+		$this->version = '24.0.2-2';
 		$this->const_name = 'MAIN_MODULE_'.strtoupper($this->name);
 		$this->picto = 'generic';
 
@@ -65,6 +65,12 @@ class modWinsoft extends DolibarrModules
 			'hooks' => array(
 				'data' => array(
 					'thirdpartyconsumption',
+					// product statistics pages (unit price column), see class/actions_winsoft.class.php
+					'productstatsorder',
+					'productstatsinvoice',
+					'productstatssupplierinvoice',
+					'productstatspropal',
+					'productstatssupplierpropal',
 				),
 				'entity' => '0',
 			),
@@ -89,6 +95,7 @@ class modWinsoft extends DolibarrModules
 		$this->const = array(
 			0 => array('WINSOFT_PDF_PRONEW_SIGNATURE', 'chaine', '1', 'Print signature image on proposal PDF "pronew"', 0, 'current', 0),
 			1 => array('WINSOFT_PDF_PRONEW_NO_TAX_SIGNATURE', 'chaine', '1', 'Print signature image on proposal PDF "pronew_no_tax"', 0, 'current', 0),
+			2 => array('WINSOFT_PRODUCT_STATS_UNIT_PRICE', 'chaine', '1', 'Product statistics pages with unit price column (0 = standard pages)', 0, 'current', 0),
 		);
 
 		if (!isModEnabled("winsoft")) {
