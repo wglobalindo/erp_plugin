@@ -215,7 +215,7 @@ if (($action == 'create' || $action == 'add') && !$error)
 					//exit();
 					$object->origin    = GETPOST('origin', 'alpha');
 					$object->origin_id = $orders_id[$ii];
-					$object->linked_objects = $orders_id;
+					$object->linked_objects = array($object->origin => $orders_id);	// Dolibarr 24: one link per merged document (a plain list made links of type "0", "1"...)
 
 					$id = $object->create($user);
 					$object->fetch_thirdparty();
@@ -456,8 +456,8 @@ if ($action == 'create' && !$error)
 	print '<input type="hidden" name="action" value="add">';
 	print '<input type="hidden" name="socid" value="'.$soc->id.'">' ."\n";
 	print '<input name="facnumber" type="hidden" value="provisoire">';
-	print '<input name="ref_client" type="hidden" value="'.$ref_client.'">';
-	print '<input name="ref_int" type="hidden" value="'.$ref_int.'">';
+	print '<input name="ref_client" type="hidden" value="'.dol_escape_htmltag(GETPOST('ref_client', 'alpha')).'">';
+	print '<input name="ref_int" type="hidden" value="'.dol_escape_htmltag(GETPOST('ref_int', 'alpha')).'">';
 	print '<input type="hidden" name="origin" value="'.GETPOST('origin').'">';
 	print '<input type="hidden" name="originid" value="'.GETPOST('originid').'">';
 	print '<input type="hidden" name="autocloseorders" value="'.GETPOST('autocloseorders').'">';

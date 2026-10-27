@@ -234,6 +234,12 @@ class Utill extends Propal
 			if ($this->db->num_rows($resql))
 			{
 				$obj = $this->db->fetch_object($resql);
+				// PHP 8: columns of llx_propal that llx_supplier_proposal does not have (were PHP 7 notices, value stays empty)
+				foreach (array('ref_client', 'date_modification', 'dp', 'dfv', 'fk_availability', 'availability_code', 'availability', 'fk_input_reason', 'demand_reason_code', 'demand_reason', 'fk_delivery_address', 'fk_incoterms', 'location_incoterms', 'libelle_incoterms') as $tmpkey) {
+					if (!property_exists($obj, $tmpkey)) {
+						$obj->$tmpkey = null;
+					}
+				}
 
 				$this->id                   = $obj->rowid;
 				$this->entity               = $obj->entity;
@@ -387,6 +393,12 @@ class Utill extends Propal
 			while ($i < $num)
 			{
 				$objp                   = $this->db->fetch_object($result);
+				// PHP 8: columns of llx_propaldet that llx_supplier_proposaldet does not have (were PHP 7 notices, value stays empty)
+				foreach (array('fk_propal', 'vat_src_code', 'localtax1_type', 'localtax2_type', 'weight', 'weight_units', 'volume', 'volume_units', 'date_start', 'date_end') as $tmpkey) {
+					if (!property_exists($objp, $tmpkey)) {
+						$objp->$tmpkey = null;
+					}
+				}
 				$line                   = new PropaleLigne2($this->db);
 
 				$line->rowid			= $objp->rowid; //Deprecated
@@ -581,7 +593,7 @@ class PropaleLigne2 extends PropaleLigne
 						if ($key != 'rowid' && $key != 'tms' && $key != 'fk_member' && !is_int($key))
 						{
 							// we can add this attribute to object
-							if (!empty($extrafields) && in_array($extrafields->attributes[$this->table_element]['type'][$key], array('date', 'datetime')))
+							if (!empty($extrafields) && in_array($extrafields->attributes[$table_element]['type'][$key] ?? '', array('date', 'datetime')))
 							{
 								//var_dump($extrafields->attributes[$this->table_element]['type'][$key]);
 								$this->array_options["options_".$key] = $this->db->jdate($value);
