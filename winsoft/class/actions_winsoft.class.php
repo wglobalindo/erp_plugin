@@ -17,6 +17,9 @@
  *  - column + search filter "Ref. customer" / "Ref. supplier" for orders, invoices, supplier orders and supplier invoices
  *  - columns "Total HT (currency)" and "Unit price (currency)" when the third party uses a foreign currency
  * Columns are printed after the standard columns (hooks cannot insert them in the middle of the table).
+ *
+ * Product statistics pages (product/stats/*.php, contexts productstats*): redirected to the copies in
+ * winsoft/product/stats/ that have a unit price column (replaces the Dolibarr 13 core edit, no core change).
  */
 class ActionsWinsoft
 {
@@ -66,6 +69,48 @@ class ActionsWinsoft
 	public function __construct($db)
 	{
 		$this->db = $db;
+	}
+
+	/**
+	 * Product "Referers" statistics pages: context => page name.
+	 * The standard pages are replaced by copies in this module with a unit price column (Dolibarr 13 core edit).
+	 * @var array<string,string>
+	 */
+	private static $productStatsPages = array(
+		'productstatsorder' => 'commande.php',
+		'productstatsinvoice' => 'facture.php',
+		'productstatssupplierinvoice' => 'facture_fournisseur.php',
+		'productstatspropal' => 'propal.php',
+		'productstatssupplierpropal' => 'supplier_proposal.php',
+	);
+
+	/**
+	 * Hook doActions: redirect the standard product statistics pages to the winsoft copies (with unit price column)
+	 *
+	 * @param array<string,mixed>	$parameters	Hook parameters
+	 * @param CommonObject			$object		Product
+	 * @param string				$action		Action
+	 * @param HookManager			$hookmanager	Hook manager
+	 * @return int						0
+	 */
+	public function doActions($parameters, &$object, &$action, $hookmanager)
+	{
+		$context = empty($parameters['currentcontext']) ? '' : $parameters['currentcontext'];
+		if (empty(self::$productStatsPages[$context]) || defined('WINSOFT_PRODUCT_STATS_PAGE')) {
+			return 0;
+		}
+		if (!getDolGlobalInt('WINSOFT_PRODUCT_STATS_UNIT_PRICE', 1)) {	// set to 0 to use the standard pages
+			return 0;
+		}
+		$url = dol_buildpath('/winsoft/product/stats/'.self::$productStatsPages[$context], 1);
+		if (!empty($_SERVER['QUERY_STRING'])) {
+			$url .= '?'.$_SERVER['QUERY_STRING'];
+		}
+		if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+			return 0;	// a POST (search form) is never redirected; the copies post to themselves
+		}
+		header('Location: '.$url);
+		exit;
 	}
 
 	/**

@@ -825,36 +825,124 @@ class Commande2 extends Commande
 class SupplierProposal2 extends SupplierProposal
 {
 	/**
-	 *  Update a proposal line
+	 * Add a line. Same as SupplierProposal::addline(), except that when a unit price in main currency AND a unit price
+	 * in foreign currency are both given, the main currency price is kept as entered (Dolibarr resets it to 0 and
+	 * recomputes it from the foreign currency price and the rate).
+	 * This replaces the Dolibarr 13 edit of htdocs/supplier_proposal/class/supplier_proposal.class.php (no core change).
 	 *
-	 *  @param      int			$rowid           	Id de la ligne
-	 *  @param      double		$pu		     	  	Prix unitaire (HT ou TTC selon price_base_type)
-	 *  @param      double		$qty            	Quantity
-	 *  @param      double		$remise_percent  	Remise effectuee sur le produit
-	 *  @param      double		$txtva	          	Taux de TVA
-	 * 	@param	  	double		$txlocaltax1		Local tax 1 rate
-	 *  @param	  	double		$txlocaltax2		Local tax 2 rate
-	 *  @param      string		$desc            	Description
-	 *	@param	  	double		$price_base_type	HT ou TTC
-	 *	@param      int			$info_bits        	Miscellaneous informations
-	 *	@param		int			$special_code		Special code (also used by externals modules!)
-	 * 	@param		int			$fk_parent_line		Id of parent line (0 in most cases, used by modules adding sublevels into lines).
-	 * 	@param		int			$skip_update_total	Keep fields total_xxx to 0 (used for special lines by some modules)
-	 *  @param		int			$fk_fournprice		Id of origin supplier price
-	 *  @param		int			$pa_ht				Price (without tax) of product when it was bought
-	 *  @param		string		$label				???
-	 *  @param		int			$type				0/1=Product/service
-	 *  @param		array		$array_options		extrafields array
-	 * 	@param		string		$ref_supplier			Supplier price reference
-	 *	@param		int			$fk_unit			Id of the unit to use.
-	 * 	@param		double		$pu_ht_devise		Unit price in currency
-	 *  @return     int     		        		0 if OK, <0 if KO
+	 * Parameters: see SupplierProposal::addline()
+	 *
+	 * @return int	>0 if OK (id of line), <0 if KO
+	 */
+	public function addline($desc, $pu_ht, $qty, $txtva, $txlocaltax1 = 0, $txlocaltax2 = 0, $fk_product = 0, $remise_percent = 0, $price_base_type = 'HT', $pu_ttc = 0, $info_bits = 0, $type = 0, $rang = -1, $special_code = 0, $fk_parent_line = 0, $fk_fournprice = 0, $pa_ht = 0, $label = '', $array_options = [], $ref_supplier = '', $fk_unit = 0, $origin = '', $origin_id = 0, $pu_ht_devise = 0, $date_start = 0, $date_end = 0)
+	{
+		$result = parent::addline($desc, $pu_ht, $qty, $txtva, $txlocaltax1, $txlocaltax2, $fk_product, $remise_percent, $price_base_type, $pu_ttc, $info_bits, $type, $rang, $special_code, $fk_parent_line, $fk_fournprice, $pa_ht, $label, $array_options, $ref_supplier, $fk_unit, $origin, $origin_id, $pu_ht_devise, $date_start, $date_end);
+		if ($result > 0) {
+			$pu = ($price_base_type == 'HT' ? $pu_ht : $pu_ttc);
+			if ($this->keepMainCurrencyPrice($result, $pu, $qty, $remise_percent, $txtva, $txlocaltax1, $txlocaltax2, $price_base_type, $info_bits, $type, $pu_ht_devise, 'addline') < 0) {
+				return -1;
+			}
+		}
+		return $result;
+	}
+
+	/**
+	 * Update a line. Same as SupplierProposal::updateline(), with the main currency price kept as in addline() above.
+	 *
+	 * Parameters: see SupplierProposal::updateline()
+	 *
+	 * @return int	0 if OK, <0 if KO
+	 */
+	public function updateline($rowid, $pu, $qty, $remise_percent, $txtva, $txlocaltax1 = 0, $txlocaltax2 = 0, $desc = '', $price_base_type = 'HT', $info_bits = 0, $special_code = 0, $fk_parent_line = 0, $skip_update_total = 0, $fk_fournprice = 0, $pa_ht = 0, $label = '', $type = 0, $array_options = [], $ref_supplier = '', $fk_unit = 0, $pu_ht_devise = 0)
+	{
+		$result = parent::updateline($rowid, $pu, $qty, $remise_percent, $txtva, $txlocaltax1, $txlocaltax2, $desc, $price_base_type, $info_bits, $special_code, $fk_parent_line, $skip_update_total, $fk_fournprice, $pa_ht, $label, $type, $array_options, $ref_supplier, $fk_unit, $pu_ht_devise);
+		if ($result >= 0 && empty($skip_update_total)) {
+			if ($this->keepMainCurrencyPrice($rowid, $pu, $qty, $remise_percent, $txtva, $txlocaltax1, $txlocaltax2, $price_base_type, $info_bits, $type, $pu_ht_devise, 'updateline') < 0) {
+				return -1;
+			}
+		}
+		return $result;
+	}
+
+	/**
+	 * Kept for the old calls of vptop pages (Dolibarr 13 copy of updateline()).
+	 *
+	 * Parameters: see SupplierProposal::updateline()
+	 *
+	 * @return int	0 if OK, <0 if KO
 	 */
 	public function updateline2($rowid, $pu, $qty, $remise_percent, $txtva, $txlocaltax1 = 0, $txlocaltax2 = 0, $desc = '', $price_base_type = 'HT', $info_bits = 0, $special_code = 0, $fk_parent_line = 0, $skip_update_total = 0, $fk_fournprice = 0, $pa_ht = 0, $label = '', $type = 0, $array_options = 0, $ref_supplier = '', $fk_unit = '', $pu_ht_devise = 0)
 	{
-		// Dolibarr 24: the Dolibarr 13 copy of updateline() kept here was only removing "$pu = 0" for foreign currency prices.
-		// Dolibarr 24 updateline() has the same signature, and the WINSOFT PATCH of supplier_proposal.class.php removes that reset,
-		// so the standard method is used (it also has the 24 fixes: vat code, line extrafields, triggers).
-		return parent::updateline($rowid, $pu, $qty, $remise_percent, $txtva, $txlocaltax1, $txlocaltax2, $desc, $price_base_type, $info_bits, $special_code, $fk_parent_line, $skip_update_total, $fk_fournprice, $pa_ht, $label, $type, (is_array($array_options) ? $array_options : array()), $ref_supplier, (int) $fk_unit, $pu_ht_devise);
+		return $this->updateline($rowid, $pu, $qty, $remise_percent, $txtva, $txlocaltax1, $txlocaltax2, $desc, $price_base_type, $info_bits, $special_code, $fk_parent_line, $skip_update_total, $fk_fournprice, $pa_ht, $label, $type, (is_array($array_options) ? $array_options : array()), $ref_supplier, (int) $fk_unit, $pu_ht_devise);
+	}
+
+	/**
+	 * When both a main currency price and a foreign currency price were given, recompute the line amounts the way
+	 * Dolibarr does but without resetting the main currency price, store them and update the proposal totals.
+	 * Nothing is done in the other cases (the standard result is already the same).
+	 *
+	 * @param int		$lineid				Id of line
+	 * @param float		$pu					Unit price in main currency as given by the caller (HT or TTC)
+	 * @param float		$qty				Quantity
+	 * @param float		$remise_percent		Discount
+	 * @param string	$txtva				VAT rate, can be '5.0(CODE)'
+	 * @param float		$txlocaltax1		Local tax 1 rate
+	 * @param float		$txlocaltax2		Local tax 2 rate
+	 * @param string	$price_base_type	'HT' or 'TTC'
+	 * @param int		$info_bits			Info bits
+	 * @param int		$type				0=product, 1=service
+	 * @param float		$pu_ht_devise		Unit price in foreign currency
+	 * @param string	$mode				'addline' or 'updateline' (Dolibarr gets local taxes with different argument order)
+	 * @return int							0 if nothing to do or OK, <0 if KO
+	 */
+	private function keepMainCurrencyPrice($lineid, $pu, $qty, $remise_percent, $txtva, $txlocaltax1, $txlocaltax2, $price_base_type, $info_bits, $type, $pu_ht_devise, $mode)
+	{
+		global $mysoc;
+
+		$pu = price2num($pu);
+		if (!isModEnabled("multicurrency") || !((float) $pu_ht_devise > 0) || empty($pu) || !getDolGlobalInt('VPTOP_SUPPLIER_PROPOSAL_KEEP_MAIN_PRICE', 1)) {
+			return 0;
+		}
+		include_once DOL_DOCUMENT_ROOT.'/core/lib/price.lib.php';
+
+		$remise_percent = price2num($remise_percent);
+		$qty = (float) price2num($qty);
+		if (!preg_match('/\((.*)\)/', (string) $txtva)) {
+			$txtva = price2num($txtva);
+		}
+		if ($mode == 'addline') {
+			$localtaxes_type = getLocalTaxesFromRate($txtva, 0, $this->thirdparty, $mysoc);
+		} else {
+			$localtaxes_type = getLocalTaxesFromRate($txtva, 0, $mysoc, $this->thirdparty);
+		}
+		$txtva = preg_replace('/\s*\(.*\)/', '', (string) $txtva);
+
+		$tabprice = calcul_price_total($qty, $pu, (float) $remise_percent, $txtva, (float) price2num($txlocaltax1), (float) price2num($txlocaltax2), 0, $price_base_type, $info_bits, $type, $this->thirdparty, $localtaxes_type, 100, (float) $this->multicurrency_tx, $pu_ht_devise);
+
+		$sql = "UPDATE ".MAIN_DB_PREFIX."supplier_proposaldet SET";
+		$sql .= " subprice = ".((float) $tabprice[3]);
+		$sql .= ", total_ht = ".((float) $tabprice[0]).", total_tva = ".((float) $tabprice[1]).", total_ttc = ".((float) $tabprice[2]);
+		$sql .= ", total_localtax1 = ".((float) $tabprice[9]).", total_localtax2 = ".((float) $tabprice[10]);
+		$sql .= ", multicurrency_subprice = ".((float) $tabprice[19]);
+		$sql .= ", multicurrency_total_ht = ".((float) $tabprice[16]).", multicurrency_total_tva = ".((float) $tabprice[17]).", multicurrency_total_ttc = ".((float) $tabprice[18]);
+		$sql .= " WHERE rowid = ".((int) $lineid);
+		if (!$this->db->query($sql)) {
+			$this->error = $this->db->lasterror();
+			return -1;
+		}
+		if (is_object($this->line) && $this->line->id == $lineid) {
+			$this->line->subprice = (float) $tabprice[3];
+			$this->line->total_ht = (float) $tabprice[0];
+			$this->line->total_tva = (float) $tabprice[1];
+			$this->line->total_ttc = (float) $tabprice[2];
+			$this->line->multicurrency_subprice = (float) $tabprice[19];
+			$this->line->multicurrency_total_ht = (float) $tabprice[16];
+			$this->line->multicurrency_total_tva = (float) $tabprice[17];
+			$this->line->multicurrency_total_ttc = (float) $tabprice[18];
+		}
+		if ($this->update_price(1, 'auto', 0, $this->thirdparty) < 0) {
+			return -1;
+		}
+		return 0;
 	}
 }
