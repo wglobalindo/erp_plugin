@@ -1690,7 +1690,7 @@ require_once DOL_DOCUMENT_ROOT.'/core/class/extrafields.class.php';
 		pdf_pagehead($pdf,$outputlangs,$this->page_hauteur);
 
 		// Show Draft Watermark
-		if($object->statut==Facture::STATUS_DRAFT && (! empty($conf->global->FACTURE_DRAFT_WATERMARK)) )
+		if($object->status==Facture::STATUS_DRAFT && (! empty($conf->global->FACTURE_DRAFT_WATERMARK)) )
         {
 		      pdf_watermark($pdf,$outputlangs,$this->page_hauteur,$this->page_largeur,'mm',$conf->global->FACTURE_DRAFT_WATERMARK);
         }
@@ -1756,7 +1756,7 @@ require_once DOL_DOCUMENT_ROOT.'/core/class/extrafields.class.php';
 		$pdf->SetXY($posx,$posy);
 		$pdf->SetTextColor(0,0,60);
 		$textref=$outputlangs->transnoentities("Ref")." : " . $outputlangs->convToOutputCharset($object->ref);
-		if ($object->statut == Facture::STATUS_DRAFT)
+		if ($object->status == Facture::STATUS_DRAFT)
 		{
 			$pdf->SetTextColor(128,0,0);
 			$textref.=' - '.$outputlangs->transnoentities("NotValidated");

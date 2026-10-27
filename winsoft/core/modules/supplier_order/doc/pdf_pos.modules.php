@@ -1120,7 +1120,7 @@ class pdf_pos extends ModelePDFSuppliersOrders
 		//pdf_pagehead($pdf,$outputlangs,$this->page_hauteur);
 
 		//Affiche le filigrane brouillon - Print Draft Watermark
-		/*if($object->statut==0 && (! empty($conf->global->COMMANDE_DRAFT_WATERMARK)) )
+		/*if($object->status==0 && (! empty($conf->global->COMMANDE_DRAFT_WATERMARK)) )
 		{
             pdf_watermark($pdf,$outputlangs,$this->page_hauteur,$this->page_largeur,'mm',$conf->global->COMMANDE_DRAFT_WATERMARK);
 		}*/
@@ -1208,11 +1208,11 @@ class pdf_pos extends ModelePDFSuppliersOrders
 		$pdf->SetTextColor(0,0,60);
 		$usehourmin='day';
 		if (!empty($conf->global->SUPPLIER_ORDER_USE_HOUR_FOR_DELIVERY_DATE)) $usehourmin='dayhour';
-		if (! empty($object->date_livraison))
+		if (! empty($object->delivery_date))
 		{
 			$posy+=4;
 			$pdf->SetXY($posx-90,$posy);
-			$pdf->MultiCell(190, 3, $outputlangs->transnoentities("DateDeliveryPlanned")." : " . dol_print_date($object->date_livraison,$usehourmin,false,$outputlangs,true), '', 'R');
+			$pdf->MultiCell(190, 3, $outputlangs->transnoentities("DateDeliveryPlanned")." : " . dol_print_date($object->delivery_date,$usehourmin,false,$outputlangs,true), '', 'R');
 		}
 
 

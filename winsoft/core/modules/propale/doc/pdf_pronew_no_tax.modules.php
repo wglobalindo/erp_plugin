@@ -878,7 +878,7 @@ class pdf_pronew_no_tax extends ModelePDFPropales
 		$posxval=52;
 
         // Show shipping date
-        if (! empty($object->date_livraison))
+        if (! empty($object->delivery_date))
 		{
             $outputlangs->load("sendings");
 			$pdf->SetFont('','B', $default_font_size - 2);
@@ -887,7 +887,7 @@ class pdf_pronew_no_tax extends ModelePDFPropales
 			$pdf->MultiCell(80, 4, $titre, 0, 'L');
 			$pdf->SetFont('','', $default_font_size - 2);
 			$pdf->SetXY($posxval, $posy);
-			$dlp=dol_print_date($object->date_livraison,"daytext",false,$outputlangs,true);
+			$dlp=dol_print_date($object->delivery_date,"daytext",false,$outputlangs,true);
 			$pdf->MultiCell(80, 4, $dlp, 0, 'L');
 
             $posy=$pdf->GetY()+1;
@@ -1525,7 +1525,7 @@ class pdf_pronew_no_tax extends ModelePDFPropales
 		pdf_pagehead($pdf,$outputlangs,$this->page_hauteur);
 
 		//  Show Draft Watermark
-		if($object->statut==0 && (! empty($conf->global->PROPALE_DRAFT_WATERMARK)) )
+		if($object->status==0 && (! empty($conf->global->PROPALE_DRAFT_WATERMARK)) )
 		{
             pdf_watermark($pdf,$outputlangs,$this->page_hauteur,$this->page_largeur,'mm',$conf->global->PROPALE_DRAFT_WATERMARK);
 		}
@@ -1754,20 +1754,23 @@ class pdf_pronew_no_tax extends ModelePDFPropales
 
 		$pdf->SetXY($posx, $tab_top + $tab_hl);
 		$pdf->MultiCell($largcol, $tab_hl*3, '', 1, 'R'); */
-		$sign=$conf->mycompany->dir_output.'/signature.jpg';
-			if (is_readable($sign))
-			{
-			    $height=pdf_getHeightForLogo($sign);
-			    //$pdf->Image($sign, $this->marge_gauche, $posy, 0, $height);	// width=0 (auto)
-			    $pdf->Image($sign, $posx+30, $posy+10, 0, $height);	// width=0 (auto)
-			}
-			else
-			{
-				$pdf->SetTextColor(200,0,0);
-				$pdf->SetFont('','B',$default_font_size - 2);
-				$pdf->MultiCell(100, 3, $outputlangs->transnoentities("ErrorLogoFileNotFound",$sign), 0, 'L');
-				$pdf->MultiCell(100, 3, $outputlangs->transnoentities("ErrorGoToGlobalSetup"), 0, 'L');
-			}
+		// Signature image of the company (option per company, see module Winsoft setup)
+		if (getDolGlobalInt('WINSOFT_PDF_PRONEW_NO_TAX_SIGNATURE', 1)) {
+			$sign=$conf->mycompany->dir_output.'/signature.jpg';
+				if (is_readable($sign))
+				{
+				    $height=pdf_getHeightForLogo($sign);
+				    //$pdf->Image($sign, $this->marge_gauche, $posy, 0, $height);	// width=0 (auto)
+				    $pdf->Image($sign, $posx+30, $posy+10, 0, $height);	// width=0 (auto)
+				}
+				else
+				{
+					$pdf->SetTextColor(200,0,0);
+					$pdf->SetFont('','B',$default_font_size - 2);
+					$pdf->MultiCell(100, 3, $outputlangs->transnoentities("ErrorLogoFileNotFound",$sign), 0, 'L');
+					$pdf->MultiCell(100, 3, $outputlangs->transnoentities("ErrorGoToGlobalSetup"), 0, 'L');
+				}
+		}
 
 	}
 }

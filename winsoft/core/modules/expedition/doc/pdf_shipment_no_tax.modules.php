@@ -86,7 +86,7 @@ class pdf_shipment_no_tax extends ModelePdfExpedition
      *  @param		int			$hideref			Do not show ref
      *  @return     int         	    			1=OK, 0=KO
 	 */
-	function write_file(&$object,$outputlangs,$srctemplatepath='',$hidedetails=0,$hidedesc=0,$hideref=0)
+	function write_file($object,$outputlangs,$srctemplatepath='',$hidedetails=0,$hidedesc=0,$hideref=0)
 	{
 		global $user,$conf,$langs,$mysoc,$hookmanager;
 
@@ -111,17 +111,21 @@ class pdf_shipment_no_tax extends ModelePdfExpedition
 			$object->fetch_thirdparty();
 
 			$origin = $object->origin;
+			// Dolibarr 24: source document is loaded into ->origin_object (Dolibarr 13 used ->$origin)
+			if (empty($object->origin_object) || !is_object($object->origin_object)) {
+				$object->fetch_origin();
+			}
 
 			//Creation de l expediteur
 			$this->expediteur = $mysoc;
 
 			//Creation du destinataire
-			$idcontact = $object->$origin->getIdContact('external','SHIPPING');
+			$idcontact = $object->origin_object->getIdContact('external','SHIPPING');
 			$this->destinataire = new Contact($this->db);
 			if (! empty($idcontact[0])) $this->destinataire->fetch($idcontact[0]);
 
 			//Creation du livreur
-			$idcontact = $object->$origin->getIdContact('internal','LIVREUR');
+			$idcontact = $object->origin_object->getIdContact('internal','LIVREUR');
 			$this->livreur = new User($this->db);
 			if (! empty($idcontact[0])) $this->livreur->fetch($idcontact[0]);
 
@@ -524,7 +528,7 @@ class pdf_shipment_no_tax extends ModelePdfExpedition
 		pdf_pagehead($pdf,$outputlangs,$this->page_hauteur);
 
 			//Affiche le filigrane brouillon - Print Draft Watermark
-		if($object->statut==0 && (! empty($conf->global->SENDING_DRAFT_WATERMARK)) )
+		if($object->status==0 && (! empty($conf->global->SENDING_DRAFT_WATERMARK)) )
 		{
             pdf_watermark($pdf,$outputlangs,$this->page_hauteur,$this->page_largeur,'mm',$conf->global->SENDING_DRAFT_WATERMARK);
 		}
@@ -577,6 +581,9 @@ class pdf_shipment_no_tax extends ModelePdfExpedition
 		$pdf->MultiCell(0, 8, $outputlangs->transnoentities("RefCustomer").': '.$outputlangs->convToOutputCharset($object->ref_customer), '','L');
 
 		$origin 	= $object->origin;
+		if (empty($object->origin_object) || !is_object($object->origin_object)) {
+			$object->fetch_origin();
+		}
 		$origin_id 	= $object->origin_id;
 
 		// Add list of linked elements
@@ -693,7 +700,7 @@ class pdf_shipment_no_tax extends ModelePdfExpedition
 
 		// If SHIPPING contact defined on order, we use it
 		$usecontact=false;
-		$arrayidcontact=$object->$origin->getIdContact('external','SHIPPING');
+		$arrayidcontact=$object->origin_object->getIdContact('external','SHIPPING');
 		if (count($arrayidcontact) > 0)
 		{
 			$usecontact=true;
