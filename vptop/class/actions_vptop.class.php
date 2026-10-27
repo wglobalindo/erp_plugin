@@ -82,7 +82,7 @@ class ActionsVPtoP
 
 		echo '<script>';
 		//supplier hide
-		if (!$user->rights->fournisseur->lire){
+		if (!$user->hasRight('fournisseur', 'lire')) {
 			echo 'jQuery("tr>.propaldet_extras_supplier").parent().css("display","none");';
 			echo 'jQuery("tr>.propaldet_extras_sp").parent().css("display","none");';
 			echo 'jQuery("tr>.commandedet_extras_supplier").parent().css("display","none");';
@@ -93,7 +93,7 @@ class ActionsVPtoP
 		//echo 'jQuery("tr>.commandedet_extras_spp").parent().css("display","none");';
 		//echo 'jQuery("tr>.commandedet_extras_spd").parent().css("display","none");';
 		echo 'var buying_price = $("input[name=buying_price]:first");';
-		echo '$("#buying_price").val(price2numjs(buying_price.val().replace(",","")));';
+		echo 'if (buying_price.length && buying_price.val() !== undefined) { $("#buying_price").val(price2numjs(buying_price.val().replace(",",""))); }';
 		echo '</script>';
 
 		//print '<div class="inline-block divButAction"><a class="butActionDelete" href="/custom/vptop/reception_card.php?action=create&origin=supplierorder&origin_id=' . $object->id . '&amp;socid=">' . $object->element . '</a></div>';
@@ -102,7 +102,7 @@ class ActionsVPtoP
 
 			if ($object->statut > 0)
 			{
-				print '<div class="inline-block divButAction"><a class="butActionDelete" href="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '&amp;socid=' . $object->socid . '&amp;action=new_customer_proposal&amp;object=' . $object->element . '">' . $langs->trans("Customer Proposal") . '</a></div>';
+				print '<div class="inline-block divButAction"><a class="butActionDelete" href="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '&amp;socid=' . $object->socid . '&amp;action=new_customer_proposal&amp;object=' . $object->element . '&amp;token=' . newToken() . '">' . $langs->trans("Customer Proposal") . '</a></div>';
 
 				return 0;
 			}
@@ -113,7 +113,7 @@ class ActionsVPtoP
 			{
 
 				print '<div class="inline-block divButAction"><a class="butActionDelete" href="/custom/vptop/merge_proposal.php?socid=' . $object->socid . '&amp;sref_client='. $object->ref_client . '">' . $langs->trans("Merge") . '</a></div>';
-				//print '<div class="inline-block divButAction"><a class="butActionDelete" href="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '&amp;socid=' . $object->socid . '&amp;action=new_sporder&amp;object=' . $object->element . '">' . $langs->trans("Supplier Order") . '</a></div>';
+				//print '<div class="inline-block divButAction"><a class="butActionDelete" href="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '&amp;socid=' . $object->socid . '&amp;action=new_sporder&amp;object=' . $object->element . '&amp;token=' . newToken() . '">' . $langs->trans("Supplier Order") . '</a></div>';
 
 
 				return 0;
@@ -125,7 +125,7 @@ class ActionsVPtoP
 			{
 
 				print '<div class="inline-block divButAction"><a class="butActionDelete" href="/custom/vptop/merge.php?socid=' . $object->socid . '&amp;sref_client='. $object->ref_client . '">' . $langs->trans("Merge") . '</a></div>';
-				print '<div class="inline-block divButAction"><a class="butActionDelete" href="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '&amp;socid=' . $object->socid . '&amp;action=new_sporder&amp;object=' . $object->element . '">' . $langs->trans("Supplier Order") . '</a></div>';
+				print '<div class="inline-block divButAction"><a class="butActionDelete" href="' . $_SERVER['PHP_SELF'] . '?id=' . $object->id . '&amp;socid=' . $object->socid . '&amp;action=new_sporder&amp;object=' . $object->element . '&amp;token=' . newToken() . '">' . $langs->trans("Supplier Order") . '</a></div>';
 
 
 				return 0;
@@ -170,7 +170,7 @@ class ActionsVPtoP
 		//echo 'jQuery("tr>.commandedet_extras_spd").parent().css("display","none");';
 
 		//for no right supplier mangment
-		if (!$user->rights->fournisseur->lire){
+		if (!$user->hasRight('fournisseur', 'lire')) {
 			echo 'jQuery("tr>.propaldet_extras_spp").parent().css("display","none");';
 			echo 'jQuery("tr>.propaldet_extras_spd").parent().css("display","none");';
 			echo 'jQuery("tr>.propaldet_extras_supplier").parent().css("display","none");';
@@ -200,9 +200,9 @@ class ActionsVPtoP
 									// array('type' => 'checkbox', 'name' => 'clone_content', 'label' => $langs->trans("CloneMainAttributes"), 'value' => 1),
 									// array('type' => 'checkbox', 'name' => 'update_prices', 'label' => $langs->trans("PuttingPricesUpToDate"), 'value' =>
 									// 1),
-									array('type' => 'other','name' => 'socid','label' => $langs->trans("SelectThirdParty"),'value' => $form->select_company(GETPOST('socid', 'int'), 'socid', '(s.client=1 OR s.client=2 OR s.client=3)')));
-				if (!empty($conf->global->PROPAL_CLONE_DATE_DELIVERY) && !empty($object->date_livraison)) {
-					$formquestion[] = array('type' => 'date','name' => 'date_delivery','label' => $langs->trans("DeliveryDate"),'value' => $object->date_livraison);
+									array('type' => 'other','name' => 'socid','label' => $langs->trans("SelectThirdParty"),'value' => $form->select_company(GETPOSTINT('socid'), 'socid', '(s.client:IN:1,2,3)')));
+				if (!empty($conf->global->PROPAL_CLONE_DATE_DELIVERY) && !empty($object->delivery_date)) {
+					$formquestion[] = array('type' => 'date','name' => 'date_delivery','label' => $langs->trans("DeliveryDate"),'value' => $object->delivery_date);
 				}
 				// Paiement incomplet. On demande si motif = escompte ou autre
 				$this->resprints = $form->formconfirm('/comm/propal/card.php?origin=supplier_proposal&originid=' . $object->id.'&proposal_supplier=1','', $langs->trans('ConfirmClonePropal', $object->ref), 'new_customer_proposal', $formquestion, 'yes', 1);
@@ -215,7 +215,7 @@ class ActionsVPtoP
 
 				$object->fetchObjectLinked('','',$object->id);
 				$tosocid ="";
-				if (count($object->linkedObjectsIds['supplier_proposal']) > 0)
+				if (!empty($object->linkedObjectsIds['supplier_proposal']))
 				{
 					$tosocid ="";
 					foreach ($object->linkedObjectsIds['supplier_proposal'] as $key => $value)
@@ -234,9 +234,9 @@ class ActionsVPtoP
 									// array('type' => 'checkbox', 'name' => 'update_prices', 'label' => $langs->trans("PuttingPricesUpToDate"), 'value' =>
 									// 1),
 									//array('type' => 'other','name' => 'socid','label' => $langs->trans("SelectThirdParty"),'value' => $form->select_company(GETPOST('socid', 'int'), 'socid','s.fournisseur=1')));
-									array('type' => 'other','name' => 'socid','label' => $langs->trans("SelectThirdParty"),'value' => $form->select_company($tosocid, 'socid','s.fournisseur=1')));
-				if (!empty($conf->global->PROPAL_CLONE_DATE_DELIVERY) && !empty($object->date_livraison)) {
-					$formquestion[] = array('type' => 'date','name' => 'date_delivery','label' => $langs->trans("DeliveryDate"),'value' => $object->date_livraison);
+									array('type' => 'other','name' => 'socid','label' => $langs->trans("SelectThirdParty"),'value' => $form->select_company($tosocid, 'socid', '(s.fournisseur:=:1)')));
+				if (!empty($conf->global->PROPAL_CLONE_DATE_DELIVERY) && !empty($object->delivery_date)) {
+					$formquestion[] = array('type' => 'date','name' => 'date_delivery','label' => $langs->trans("DeliveryDate"),'value' => $object->delivery_date);
 				}
 				// Paiement incomplet. On demande si motif = escompte ou autre
 				$this->resprints = $form->formconfirm('/custom/vptop/sporder.php?origin=commande&originid=' . $object->id, $langs->trans('ClonePropal'), $langs->trans('ConfirmClonePropal', $object->ref), 'create', $formquestion, 'yes', 1);
@@ -260,7 +260,7 @@ class ActionsVPtoP
 
 			if(!empty($srcobject)){
 				$srcobject->fetchObjectLinked();
-				if (count($srcobject->linkedObjectsIds['supplier_proposal']) > 0)
+				if (!empty($srcobject->linkedObjectsIds['supplier_proposal']))
 				{
 					foreach ($srcobject->linkedObjectsIds['supplier_proposal'] as $key => $value)
 					{
@@ -271,14 +271,17 @@ class ActionsVPtoP
 
 		}
 		if ($object->element=='propal') {
-
-			$object->fetchObjectLinked();
-			if (count($object->linkedObjectsIds['supplier_proposal']) > 0)
-			{
-				foreach ($object->linkedObjectsIds['supplier_proposal'] as $key => $value)
-				{
-					$parameters['clonedObj']->add_object_linked("supplier_proposal", $value);
-
+			// Clone of a customer proposal: copy the links to supplier proposals of the source proposal.
+			// Dolibarr 24 / bug fix: use the source given by the hook ('objFrom'), not the page object. The page object can hold
+			// the id of a supplier proposal (action new_customer_proposal), which linked the links of the customer proposal with the
+			// same id. Proposals made from a supplier proposal (class Utill) are already linked to it by create().
+			$objFrom = (isset($parameters['objFrom']) && is_object($parameters['objFrom'])) ? $parameters['objFrom'] : null;
+			if ($objFrom && get_class($objFrom) == 'Propal' && $objFrom->id > 0 && !empty($parameters['clonedObj'])) {
+				$objFrom->fetchObjectLinked();
+				if (!empty($objFrom->linkedObjectsIds['supplier_proposal'])) {
+					foreach ($objFrom->linkedObjectsIds['supplier_proposal'] as $key => $value) {
+						$parameters['clonedObj']->add_object_linked("supplier_proposal", $value);
+					}
 				}
 			}
 		}
@@ -304,16 +307,16 @@ class ActionsVPtoP
 
 
 				print '
-				<form id="input_form" method="POST" action="/custom/vptop/sporder_list.php">
-					<input type="hidden" name="massaction" value='.$massaction.'>';
+				<form id="input_form" method="POST" action="'.dol_buildpath('/vptop/sporder_list.php', 1).'">
+					<input type="hidden" name="token" value="'.newToken().'">
+					<input type="hidden" name="massaction" value="'.dol_escape_htmltag($massaction).'">';
 					foreach ($toselect as $key => $value) {
-						print '<input type="hidden" name="toselect[]" value='.$value.'>';
+						print '<input type="hidden" name="toselect[]" value="'.((int) $value).'">';
 					}
 
 				print '
 
 					<input type="hidden" name="confirmmassaction" value="Confirm">
-					//<input type="hidden" name="sortfield" value="cf.date_creation">
 				</form>';
 				print '
 
@@ -378,21 +381,22 @@ class ActionsVPtoP
 				$result = file_get_contents('/var/www/html/custom/vptop/sporder_list.php', false, $context);
 				echo $result;
 				exit;*/
-				$_SESSION[massaction] = GETPOST('massaction', 'alpha');
-				$_SESSION[toselect] = GETPOST('toselect', 'array');
-				$_SESSION[sortfield] = GETPOST('sortfield', 'alpha');
-				$_SESSION[sortorder] = GETPOST('sortorder', 'alpha');
-				$_SESSION[confirmmassaction] = GETPOST('confirmmassaction', 'alpha');
+				$_SESSION['massaction'] = GETPOST('massaction', 'alpha');
+				$_SESSION['toselect'] = GETPOST('toselect', 'array');
+				$_SESSION['sortfield'] = GETPOST('sortfield', 'alpha');
+				$_SESSION['sortorder'] = GETPOST('sortorder', 'alpha');
+				$_SESSION['confirmmassaction'] = GETPOST('confirmmassaction', 'alpha');
 				header("Location: /custom/vptop/cmorder_list.php");
 
 
 			/*
 
 				print '
-				<form id="input_form" method="POST" action="/custom/vptop/sporder_list.php">
-					<input type="hidden" name="massaction" value='.$massaction.'>';
+				<form id="input_form" method="POST" action="'.dol_buildpath('/vptop/sporder_list.php', 1).'">
+					<input type="hidden" name="token" value="'.newToken().'">
+					<input type="hidden" name="massaction" value="'.dol_escape_htmltag($massaction).'">';
 					foreach ($toselect as $key => $value) {
-						print '<input type="hidden" name="toselect[]" value='.$value.'>';
+						print '<input type="hidden" name="toselect[]" value="'.((int) $value).'">';
 					}
 
 				print '
@@ -426,26 +430,26 @@ class ActionsVPtoP
 			}
 		}
 		if ($contextpage=='orderlist_new') {
-			/*$_POST[massaction]=$_SESSION[massaction];
-			$massaction=$_SESSION[massaction];*/
-			if ($_SESSION[massaction]){
-				$massaction = $_SESSION[massaction];
+			/*$_POST['massaction']=$_SESSION['massaction'];
+			$massaction=$_SESSION['massaction'];*/
+			if (!empty($_SESSION['massaction'])) {
+				$massaction = $_SESSION['massaction'];
 			}
 				print $massaction;
 
 			if ($massaction=="createbills")
 			{
 
-				unset($_SESSION[massaction]);
-				$_POST[toselect]=$_SESSION[toselect];
-				$_POST[sortfield]=$_SESSION[sortfield];
-				$_POST[sortorder]=$_SESSION[sortorder];
-				$_POST[confirmmassaction]=$_SESSION[confirmmassaction];
-				$toselect=$_SESSION[toselect];
-				$orders=$_SESSION[toselect];
-				$sortfield=$_SESSION[sortfield];
+				unset($_SESSION['massaction']);
+				$_POST['toselect']=$_SESSION['toselect'];
+				$_POST['sortfield']=$_SESSION['sortfield'];
+				$_POST['sortorder']=$_SESSION['sortorder'];
+				$_POST['confirmmassaction']=$_SESSION['confirmmassaction'];
+				$toselect=$_SESSION['toselect'];
+				$orders=$_SESSION['toselect'];
+				$sortfield=$_SESSION['sortfield'];
 
-				$confirmmassaction=$_SESSION[confirmmassaction];
+				$confirmmassaction=$_SESSION['confirmmassaction'];
 				//$massaction = GETPOST('massaction', 'alpha');
 			}
 			if ($massaction=="confirm_createsupplierbills")
@@ -460,16 +464,8 @@ class ActionsVPtoP
 		}
 		if ($contextpage=='shipmentlist') {
 
-			if (in_array('shipmentlist', explode(':', $parameters['context'])))
-			{
-				if ($sortfield && $sortorder && $search_status){
-					//echo $search_status;
-					header("Location: /custom/vptop/expedition_list.php?sortfield=$sortfield&sortorder=$sortorder&search_status=$search_status");
-				}
-				else{
-					header("Location: /custom/vptop/expedition_list.php");
-				}
-			}
+			// Dolibarr 24: the standard shipment list has the mass action "Close" (the only change of vptop/expedition_list.php),
+			// so the list is no longer redirected to the vptop copy.
 			if($action == 'classifyclose')
 			{
 
@@ -642,7 +638,7 @@ class ActionsVPtoP
 					print '</td>';
 				} else {
 					print '<td>';
-					print img_picto('', 'company').$form->select_company('', 'socid', '(s.client = 1 OR s.client = 2 OR s.client = 3) AND status=1', 'SelectThirdParty', 0, 0, null, 0, 'minwidth300 maxwidth500');
+					print img_picto('', 'company').$form->select_company('', 'socid', '((s.client:IN:1,2,3) AND (s.status:=:1))', 'SelectThirdParty', 0, 0, array(), 0, 'minwidth300 maxwidth500');
 					// reload page to retrieve customer informations
 					if (empty($conf->global->RELOAD_PAGE_ON_CUSTOMER_CHANGE_DISABLED))
 					{
@@ -666,7 +662,7 @@ class ActionsVPtoP
 				{
 					// Contacts (ask contact only if thirdparty already defined).
 					print "<tr><td>".$langs->trans("DefaultContact").'</td><td>';
-					$form->select_contacts($soc->id, $contactid, 'contactid', 1, $srccontactslist);
+					print $form->selectcontacts($soc->id, $contactid, 'contactid', 1, $srccontactslist);	// Dolibarr 24: select_contacts() removed
 					print '</td></tr>';
 
 					// Third party discounts info line
@@ -937,11 +933,11 @@ class ActionsVPtoP
 			}
 
 			if ($action == 'new_customer_proposal') {
-				require __DIR__.'/Utill.php';
+				require_once __DIR__.'/Utill.php';
 				//$result = Utill::test( $socid);
 				//echo $result;
 				$object->id=GETPOST('originid');
-				if (!GETPOST('socid', 3))
+				if (!GETPOSTINT('socid'))
 				{
 					setEventMessages($langs->trans("NoCloneOptionsSpecified"), null, 'errors');
 				} else {
@@ -954,7 +950,7 @@ class ActionsVPtoP
 								GETPOST('date_deliveryday', 'int'),
 								GETPOST('date_deliveryyear', 'int')
 							);
-							$date_delivery_old = (empty($object->delivery_date) ? $object->date_livraison : $object->delivery_date);
+							$date_delivery_old = $object->delivery_date;
 							if (!empty($date_delivery_old) && !empty($date_delivery))
 							{
 								//Attempt to get the date without possible hour rounding errors
@@ -967,7 +963,6 @@ class ActionsVPtoP
 								$difference = $date_delivery - $old_date_delivery;
 								if ($difference != 0)
 								{
-									$object->date_livraison = $date_delivery;
 									$object->delivery_date = $date_delivery;
 									foreach ($object->lines as $line)
 									{
@@ -1003,7 +998,7 @@ class ActionsVPtoP
 				$srcobject =  new CommandeFournisseur($db);
 				$srcobject->fetch(GETPOST('originid'));
 				$srcobject->fetchObjectLinked();
-				if (count($srcobject->linkedObjectsIds['supplier_proposal']) > 0)
+				if (!empty($srcobject->linkedObjectsIds['supplier_proposal']))
 				{
 					foreach ($srcobject->linkedObjectsIds['supplier_proposal'] as $key => $value)
 					{

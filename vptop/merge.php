@@ -66,7 +66,7 @@ $sref			= GETPOST('sref');
 $sref_client	= GETPOST('sref_client');
 $sall			= trim((GETPOST('search_all', 'alphanohtml')!='')?GETPOST('search_all', 'alphanohtml'):GETPOST('sall', 'alphanohtml'));
 $socid			= GETPOST('socid','int');
-$selected		= GETPOST('merge_po');
+$selected		= GETPOST('merge_po', 'array:int');
 $sortfield		= GETPOST("sortfield",'alpha');
 $sortorder		= GETPOST("sortorder",'alpha');
 $viewstatut		= GETPOST('viewstatut');
@@ -77,15 +77,15 @@ if (! $sortfield) $sortfield='c.rowid';
 if (! $sortorder) $sortorder='DESC';
 
 $now = dol_now();
-$date_start = dol_mktime(0,0,0,$_REQUEST["date_startmonth"],$_REQUEST["date_startday"],$_REQUEST["date_startyear"]);	// Date for local PHP server
-$date_end = dol_mktime(23,59,59,$_REQUEST["date_endmonth"],$_REQUEST["date_endday"],$_REQUEST["date_endyear"]);
-$date_starty = dol_mktime(0,0,0,$_REQUEST["date_start_delymonth"],$_REQUEST["date_start_delyday"],$_REQUEST["date_start_delyyear"]);	// Date for local PHP server
-$date_endy = dol_mktime(23,59,59,$_REQUEST["date_end_delymonth"],$_REQUEST["date_end_delyday"],$_REQUEST["date_end_delyyear"]);
+$date_start = dol_mktime(0,0,0,GETPOSTINT('date_startmonth'),GETPOSTINT('date_startday'),GETPOSTINT('date_startyear'));	// Date for local PHP server
+$date_end = dol_mktime(23,59,59,GETPOSTINT('date_endmonth'),GETPOSTINT('date_endday'),GETPOSTINT('date_endyear'));
+$date_starty = dol_mktime(0,0,0,GETPOSTINT('date_start_delymonth'),GETPOSTINT('date_start_delyday'),GETPOSTINT('date_start_delyyear'));	// Date for local PHP server
+$date_endy = dol_mktime(23,59,59,GETPOSTINT('date_end_delymonth'),GETPOSTINT('date_end_delyday'),GETPOSTINT('date_end_delyyear'));
 
 $extrafields = new ExtraFields($db);
 
 // fetch optionals attributes and labels
-$extralabels = $extrafields->fetch_name_optionals_label($object->table_element);
+$extralabels = $extrafields->fetch_name_optionals_label('commande');
 
 if ($action == 'create')
 {
@@ -124,7 +124,7 @@ if (($action == 'create' || $action == 'add') && !$error)
 	$langs->load('main');
 	if (isset($_GET['merge_po']))
 	{
-		$orders_id = GETPOST('merge_po','',1);
+		$orders_id = GETPOST('merge_po', 'array:int', 1);
 		$n        = count($orders_id);
 		$i        = 0;
 
@@ -134,7 +134,7 @@ if (($action == 'create' || $action == 'add') && !$error)
 	}
 	if (isset($_POST['merge_po']))
 	{
-		$orders_id = GETPOST('merge_po','',2);
+		$orders_id = GETPOST('merge_po', 'array:int', 2);
 		$nn        = count($orders_id);
 		$ii        = 0;
 
@@ -151,10 +151,10 @@ if (($action == 'create' || $action == 'add') && !$error)
 
 	// Security check
 	$fieldid = GETPOST('ref','alpha')?'facnumber':'rowid';
-	if ($user->societe_id) $socid=$user->societe_id;
+	if ($user->socid) $socid=$user->socid;
 	$result = restrictedArea($user, 'commande', $id,'','','fk_soc',$fieldid);
 
-	$usehm=$conf->global->MAIN_USE_HOURMIN_IN_DATE_RANGE;
+	$usehm=getDolGlobalString('MAIN_USE_HOURMIN_IN_DATE_RANGE');
 	//$object=new Facture($db);
 	$object=new Commande($db);
 
@@ -166,9 +166,9 @@ if (($action == 'create' || $action == 'add') && !$error)
 		$error=0;
 
 		// Standard or deposit or proforma invoice
-		if ($_POST['type'] == 0 )
+		if (GETPOSTINT('type') == 0 )
 		{
-			$datefacture = dol_mktime(12, 0, 0, $_POST['remonth'], $_POST['reday'], $_POST['reyear']);
+			$datefacture = dol_mktime(12, 0, 0, GETPOSTINT('remonth'), GETPOSTINT('reday'), GETPOSTINT('reyear'));
 			if (empty($datefacture))
 			{
 				$datefacture = dol_mktime(date("h"), date("M"), 0, date("m"), date("d"), date("Y"));
@@ -176,60 +176,37 @@ if (($action == 'create' || $action == 'add') && !$error)
 			if (! $error)
 			{
 				// Si facture standard
-				$object->socid				= $_POST['socid'];
-				$object->type				= $_POST['type'];
-				$object->number				= $_POST['facnumber'];
+				$object->socid				= GETPOSTINT('socid');
+				$object->type				= GETPOSTINT('type');
+				$object->number				= GETPOST('facnumber', 'alpha');
 				$object->date				= $datefacture;
-				$object->note_public		= trim($_POST['note_public']);
-				$object->note				= trim($_POST['note']);
-				$object->ref_client			= $_POST['ref_client'];
-				$object->ref_int			= $_POST['ref_int'];
-				$object->modelpdf			= $_POST['model'];
-				$object->fk_project			= $_POST['projectid'];
-				$object->cond_reglement_id	= ($_POST['type'] == 3?1:$_POST['cond_reglement_id']);
-				$object->mode_reglement_id	= $_POST['mode_reglement_id'];
-				$object->amount				= $_POST['amount'];
-				$object->remise_absolue		= $_POST['remise_absolue'];
-				$object->remise_percent		= $_POST['remise_percent'];
+				$object->note_public		= trim(GETPOST('note_public', 'restricthtml'));
+				$object->note_private		= trim(GETPOST('note', 'restricthtml'));	// Dolibarr 24: ->note removed
+				$object->ref_client			= GETPOST('ref_client', 'alpha');
+				$object->ref_int			= GETPOST('ref_int', 'alpha');
+				$object->model_pdf			= GETPOST('model', 'alpha');	// Dolibarr 24: ->modelpdf removed
+				$object->fk_project			= GETPOSTINT('projectid');
+				$object->cond_reglement_id	= (GETPOSTINT('type') == 3 ? 1 : GETPOSTINT('cond_reglement_id'));
+				$object->mode_reglement_id	= GETPOSTINT('mode_reglement_id');
+				$object->amount				= GETPOST('amount', 'alpha');
+				$object->remise_absolue		= GETPOST('remise_absolue', 'alpha');
+				$object->remise_percent		= GETPOST('remise_percent', 'alpha');
 
 				$ret = $extrafields->setOptionalsFromPost($extralabels,$object);
 				if ($ret < 0) $error++;
 
-				if ($_POST['origin'] && $_POST['originid'])
+				if (GETPOST('origin', 'alpha') && GETPOSTINT('originid'))
 				{
-					$object->origin    = $_POST['origin'];
+					$object->origin    = GETPOST('origin', 'alpha');
 					$object->origin_id = $orders_id[$ii];
-					$object->linked_objects = $orders_id;
+					$object->linked_objects = array($object->origin => $orders_id);	// Dolibarr 24: one link per merged document (a plain list made links of type "0", "1"...)
 					$id = $object->create($user);
 					$object->fetch_thirdparty();
 
 					if ($id>0)
 					{
-						foreach($orders_id as $origin => $origin_id)
-						{
-							$origin_id = (! empty($origin_id) ? $origin_id : $object->origin_id);
-							$db->begin();
-							$sql = "INSERT INTO ".MAIN_DB_PREFIX."element_element (";
-							$sql.= "fk_source";
-							$sql.= ", sourcetype";
-							$sql.= ", fk_target";
-							$sql.= ", targettype";
-							$sql.= ") VALUES (";
-							$sql.= $origin_id;
-							$sql.= ", '".$object->origin."'";
-							$sql.= ", ".$id;
-							$sql.= ", '".$object->element."'";
-							$sql.= ")";
-
-							if ($db->query($sql))
-							{
-								$db->commit();
-							}
-							else
-							{
-								$db->rollback();
-							}
-						}
+						// Dolibarr 24: links to the merged orders are created by $object->create() from $object->linked_objects
+						// (the Dolibarr 13 code also inserted them here with SQL, which now only produced duplicate key errors)
 
 						while ($ii < $nn)
 						{
@@ -248,9 +225,12 @@ if (($action == 'create' || $action == 'add') && !$error)
 								}
 								$fk_parent_line=0;
 								$num=count($lines);
+								// PHP 8: undefined in the Dolibarr 13 code (so lines were added with VAT rate 0 and no label), same values kept
+								$tva_tx = 0;
+								$label = '';
 								for ($i=0;$i<$num;$i++)
 								{
-									$desc=($lines[$i]->desc?$lines[$i]->desc:$lines[$i]->libelle);
+									$desc=($lines[$i]->desc?$lines[$i]->desc:$lines[$i]->product_label);
 									if ($lines[$i]->subprice < 0)
 									{
 										// Negative line, we create a discount line
@@ -296,7 +276,7 @@ if (($action == 'create' || $action == 'add') && !$error)
 										}
 
 										// Extrafields
-										if (empty($conf->global->MAIN_EXTRAFIELDS_DISABLED) && method_exists($lines[$i], 'fetch_optionals')) {
+										if (!getDolGlobalString('MAIN_EXTRAFIELDS_DISABLED') && method_exists($lines[$i], 'fetch_optionals')) {
 											$lines[$i]->fetch_optionals($lines[$i]->rowid);
 											$array_options = $lines[$i]->array_options;
 										}
@@ -353,8 +333,8 @@ if (($action == 'create' || $action == 'add') && !$error)
 		{
 			$db->rollback();
 			$action='create';
-			$_GET["origin"]=$_POST["origin"];
-			$_GET["originid"]=$_POST["originid"];
+			$_GET["origin"] = GETPOST('origin', 'alpha');
+			$_GET["originid"] = GETPOSTINT('originid');
 			setEventMessages($object->error, $object->errors, 'errors');
 			$error++;
 		}
@@ -367,6 +347,7 @@ if (($action == 'create' || $action == 'add') && !$error)
  */
 
 $html = new Form($db);
+$form = $html;
 $htmlother = new FormOther($db);
 $formfile = new FormFile($db);
 $companystatic = new Societe($db);
@@ -389,23 +370,23 @@ if ($action == 'create' && !$error)
 		$remise_percent 	= $soc->remise_percent;
 	}
 	$remise_absolue 	= 0;
-	$dateinvoice		= empty($conf->global->MAIN_AUTOFILL_DATE)?-1:'';
+	$dateinvoice		= getDolGlobalString('MAIN_AUTOFILL_DATE') ? '' : -1;
 
 	$absolute_discount=$soc->getAvailableDiscounts();
 	print '<form name="add" action="'.$_SERVER["PHP_SELF"].'" method="POST">';
-	print '<input type="hidden" name="token" value="'.$_SESSION['newtoken'].'">';
+	print '<input type="hidden" name="token" value="'.newToken().'">';
 	print '<input type="hidden" name="action" value="add">';
 	print '<input type="hidden" name="socid" value="'.$soc->id.'">' ."\n";
 	print '<input name="facnumber" type="hidden" value="provisoire">';
-	print '<input name="ref_client" type="hidden" value="'.$ref_client.'">';
-	print '<input name="ref_int" type="hidden" value="'.$ref_int.'">';
+	print '<input name="ref_client" type="hidden" value="'.dol_escape_htmltag(GETPOST('ref_client', 'alpha')).'">';
+	print '<input name="ref_int" type="hidden" value="'.dol_escape_htmltag(GETPOST('ref_int', 'alpha')).'">';
 	print '<input type="hidden" name="origin" value="'.GETPOST('origin').'">';
 	print '<input type="hidden" name="originid" value="'.GETPOST('originid').'">';
 	print '<input type="hidden" name="autocloseorders" value="'.GETPOST('autocloseorders').'">';
 
     
 
-	dol_fiche_head();
+	print dol_get_fiche_head();
 
 	print '<table class="border" width="100%">';
 
@@ -422,7 +403,7 @@ if ($action == 'create' && !$error)
 
     // Date
 	print '<tr><td class="fieldrequired">' . $langs->trans('Date') . '</td><td>';
-	$form->select_date('', 're', '', '', '', "crea_commande", 1, 1);			// Always autofill date with current date
+	print $form->selectDate('', 're', 0, 0, 0, "crea_commande", 1, 1);			// Always autofill date with current date
 	print '</td></tr>';
 
 	// Type
@@ -483,7 +464,7 @@ if ($action == 'create' && !$error)
 	print '<td>';
 	include_once DOL_DOCUMENT_ROOT . '/core/modules/commande/modules_commande.php';
 	$liste = ModelePDFCommandes::liste_modeles($db);
-	print $form->selectarray('model', $liste, $conf->global->COMMANDE_ADDON_PDF);
+	print $form->selectarray('model', $liste, getDolGlobalString('COMMANDE_ADDON_PDF'));
 	print "</td></tr>";
 
     // Other attributes
@@ -505,7 +486,7 @@ if ($action == 'create' && !$error)
 
 	print '</textarea></td></tr>';
 	// Private note
-	if (empty($user->societe_id))
+	if (empty($user->socid))
 	{
 		print '<tr>';
 		print '<td class="" valign="top">'.$langs->trans('NotePrivate').'</td>';
@@ -524,7 +505,7 @@ if ($action == 'create' && !$error)
 		$i++;
 	}
 
-	dol_fiche_end();
+	print dol_get_fiche_end();
 
 	// Button "Create Draft"
 	print '<div class="center"><input type="submit" class="button" name="bouton" value="'.$langs->trans('CreateDraft').'" /></div>';
@@ -598,8 +579,8 @@ if (($action != 'create' && $action != 'add') || ($action == 'create' && $error)
 		$num = $db->num_rows($resql);
 		print load_fiche_titre($title);
 		$i = 0;
-		$period=$html->select_date($date_start,'date_start',0,0,1,'',1,0,1).' - '.$html->select_date($date_end,'date_end',0,0,1,'',1,0,1);
-		$periodely=$html->select_date($date_starty,'date_start_dely',0,0,1,'',1,0,1).' - '.$html->select_date($date_endy,'date_end_dely',0,0,1,'',1,0,1);
+		$period=$html->selectDate($date_start, 'date_start', 0, 0, 1, '', 1, 0).' - '.$html->selectDate($date_end, 'date_end', 0, 0, 1, '', 1, 0);
+		$periodely=$html->selectDate($date_starty, 'date_start_dely', 0, 0, 1, '', 1, 0).' - '.$html->selectDate($date_endy, 'date_end_dely', 0, 0, 1, '', 1, 0);
 
 		if (! empty($socid))
 		{
@@ -669,8 +650,9 @@ if (($action != 'create' && $action != 'add') || ($action == 'create' && $error)
 			$generic_commande->id=$objp->rowid;
 			$generic_commande->ref=$objp->ref;
 			$generic_commande->statut = $objp->fk_statut;
+			$generic_commande->status = (int) $objp->fk_statut;	// Dolibarr 24: LibStatut() reads ->status
 			$generic_commande->date_commande = $db->jdate($objp->date_commande);
-			$generic_commande->date_livraison = $db->jdate($objp->date_livraison);
+			$generic_commande->delivery_date = $db->jdate($objp->date_livraison);
 
 			print '<table class="nobordernopadding"><tr class="nocellnopadd">';
 			print '<td class="nobordernopadding nowrap">';
@@ -713,8 +695,6 @@ if (($action != 'create' && $action != 'add') || ($action == 'create' && $error)
 
 			print '</tr>';
 
-			$total = $total + $objp->price;
-			$subtotal = $subtotal + $objp->price;
 			$i++;
 		}
 		print '</table>';
@@ -722,7 +702,7 @@ if (($action != 'create' && $action != 'add') || ($action == 'create' && $error)
 		/*
 		 * Boutons actions
 		*/
-		//print '<br><div class="center"><input type="checkbox" '.(empty($conf->global->INVOICE_CLOSE_ORDERS_OFF_BY_DEFAULT_FORMASSINVOICE)?' checked="checked"':'').' name="autocloseorders"> '.$langs->trans("CloseProcessedOrdersAutomatically");
+		//print '<br><div class="center"><input type="checkbox" '.(!getDolGlobalString('INVOICE_CLOSE_ORDERS_OFF_BY_DEFAULT_FORMASSINVOICE')?' checked="checked"':'').' name="autocloseorders"> '.$langs->trans("CloseProcessedOrdersAutomatically");
 		print '<div align="right">';
 		print '<input type="hidden" name="socid" value="'.$socid.'">';
 		print '<input type="hidden" name="action" value="create">';

@@ -51,7 +51,7 @@ class Utill extends Propal
         parent::__construct($db, $socid = 0, $propalid = 0);
 	}
 
-    public function createFromClone2(User $user, $socid = 0, $forceentity = null,$id)
+    public function createFromClone2(User $user, $socid = 0, $forceentity = null, $id = 0)
 	{
 		global $conf, $hookmanager, $origin, $originid;
 
@@ -103,13 +103,14 @@ class Utill extends Propal
 		}
 		else
 		{
-		    $objsoc->fetch2($object->socid);
+		    $objsoc->fetch($object->socid);	// Dolibarr 24: Societe has no fetch2()
 		}
 
 		$object->id = 0;
 		$object->ref = '';
 		$object->entity = (! empty($forceentity) ? $forceentity : $object->entity);
 		$object->statut = self::STATUS_DRAFT;
+		$object->status = self::STATUS_DRAFT;
 
 		// Clear fields
 		$object->user_author = $user->id;
@@ -117,8 +118,8 @@ class Utill extends Propal
 		$object->date = $now;
 		$object->datep = $now; // deprecated
 		$object->fin_validite = $object->date + ($object->duree_validite * 24 * 3600);
-		if (empty($conf->global->MAIN_KEEP_REF_CUSTOMER_ON_CLONING)) $object->ref_client = '';
-		if ($conf->global->MAIN_DONT_KEEP_NOTE_ON_CLONING == 1)
+		if (!getDolGlobalString('MAIN_KEEP_REF_CUSTOMER_ON_CLONING')) $object->ref_client = '';
+		if (getDolGlobalInt('MAIN_DONT_KEEP_NOTE_ON_CLONING') == 1)
 		{
 			$object->note_private = '';
 			$object->note_public = '';
@@ -133,7 +134,7 @@ class Utill extends Propal
 		$object->origin_id = $originid;
 
 		$object->linked_objects [$object->origin] = $object->origin_id;
-		if (is_array($_POST['other_linked_objects']) && !empty($_POST['other_linked_objects'])) {
+		if (isset($_POST['other_linked_objects']) && is_array($_POST['other_linked_objects']) && !empty($_POST['other_linked_objects'])) {
 			$object->linked_objects = array_merge($object->linked_objects, $_POST['other_linked_objects']);
 		}
 
@@ -200,7 +201,7 @@ class Utill extends Propal
     function fetch2($rowid,$ref='')
 	{
 			$sql = "SELECT p.rowid, p.entity, p.ref, p.remise, p.remise_percent, p.remise_absolue, p.fk_soc";
-			$sql.= ", p.total, p.tva, p.localtax1, p.localtax2, p.total_ht";
+			$sql.= ", p.total_ttc as total, p.total_tva as tva, p.localtax1, p.localtax2, p.total_ht";	// Dolibarr 14+: total -> total_ttc, tva -> total_tva
 			$sql.= ", p.datec";
 			$sql.= ", p.date_valid as datev";
 			$sql.= ", p.date_livraison as date_livraison";
@@ -233,6 +234,12 @@ class Utill extends Propal
 			if ($this->db->num_rows($resql))
 			{
 				$obj = $this->db->fetch_object($resql);
+				// PHP 8: columns of llx_propal that llx_supplier_proposal does not have (were PHP 7 notices, value stays empty)
+				foreach (array('ref_client', 'date_modification', 'dp', 'dfv', 'fk_availability', 'availability_code', 'availability', 'fk_input_reason', 'demand_reason_code', 'demand_reason', 'fk_delivery_address', 'fk_incoterms', 'location_incoterms', 'libelle_incoterms') as $tmpkey) {
+					if (!property_exists($obj, $tmpkey)) {
+						$obj->$tmpkey = null;
+					}
+				}
 
 				$this->id                   = $obj->rowid;
 				$this->entity               = $obj->entity;
@@ -250,12 +257,12 @@ class Utill extends Propal
 				$this->total_ttc            = $obj->total;
 				$this->socid                = $obj->fk_soc;
 				$this->fk_project           = $obj->fk_projet;
-				$this->modelpdf             = $obj->model_pdf;
-				$this->last_main_doc		= $obj->last_main_doc;
+				$this->model_pdf            = $obj->model_pdf;
 				$this->note                 = $obj->note_private; // TODO deprecated
 				$this->note_private         = $obj->note_private;
 				$this->note_public          = $obj->note_public;
 				$this->statut               = (int) $obj->fk_statut;
+				$this->status               = (int) $obj->fk_statut;
 				$this->statut_libelle       = $obj->statut_label;
 
 				$this->datec                = $this->db->jdate($obj->datec); // TODO deprecated
@@ -266,7 +273,7 @@ class Utill extends Propal
 				$this->date                 = $this->db->jdate($obj->dp);	// Proposal date
 				$this->datep                = $this->db->jdate($obj->dp);    // deprecated
 				$this->fin_validite         = $this->db->jdate($obj->dfv);
-				$this->date_livraison       = $this->db->jdate($obj->date_livraison);
+				$this->delivery_date        = $this->db->jdate($obj->date_livraison);	// Dolibarr 24: was ->date_livraison
 				$this->shipping_method_id   = ($obj->fk_shipping_method>0)?$obj->fk_shipping_method:null;
 				$this->availability_id      = $obj->fk_availability;
 				$this->availability_code    = $obj->availability_code;
@@ -309,12 +316,11 @@ class Utill extends Propal
 				{
 					$this->multicurrency_code 		= "IDR";
 					$this->multicurrency_tx 		= "1.00000000";
-					$this->modelpdf             = "";
+					$this->model_pdf            = "";
 				}
 
 				if ($obj->fk_statut == self::STATUS_DRAFT)
 				{
-					$this->brouillon = 1;
 				}
 
 				// Retreive all extrafield
@@ -387,6 +393,12 @@ class Utill extends Propal
 			while ($i < $num)
 			{
 				$objp                   = $this->db->fetch_object($result);
+				// PHP 8: columns of llx_propaldet that llx_supplier_proposaldet does not have (were PHP 7 notices, value stays empty)
+				foreach (array('fk_propal', 'vat_src_code', 'localtax1_type', 'localtax2_type', 'weight', 'weight_units', 'volume', 'volume_units', 'date_start', 'date_end') as $tmpkey) {
+					if (!property_exists($objp, $tmpkey)) {
+						$objp->$tmpkey = null;
+					}
+				}
 				$line                   = new PropaleLigne2($this->db);
 
 				$line->rowid			= $objp->rowid; //Deprecated
@@ -425,7 +437,6 @@ class Utill extends Propal
 
 				$line->ref				= $objp->product_ref;		// TODO deprecated
 				$line->product_ref		= $objp->product_ref;
-				$line->libelle			= $objp->product_label;		// TODO deprecated
 				$line->product_label	= $objp->product_label;
 				$line->product_desc     = $objp->product_desc; 		// Description produit
 				$line->fk_product_type  = $objp->fk_product_type;
@@ -582,7 +593,7 @@ class PropaleLigne2 extends PropaleLigne
 						if ($key != 'rowid' && $key != 'tms' && $key != 'fk_member' && !is_int($key))
 						{
 							// we can add this attribute to object
-							if (!empty($extrafields) && in_array($extrafields->attributes[$this->table_element]['type'][$key], array('date', 'datetime')))
+							if (!empty($extrafields) && in_array($extrafields->attributes[$table_element]['type'][$key] ?? '', array('date', 'datetime')))
 							{
 								//var_dump($extrafields->attributes[$this->table_element]['type'][$key]);
 								$this->array_options["options_".$key] = $this->db->jdate($value);
@@ -631,11 +642,12 @@ class Commande2 extends Commande
 		print '<td class="right">'.$langs->trans('PriceUHT').'</td>';
 		if (!empty($conf->multicurrency->enabled)) print '<td class="right">'.$langs->trans('PriceUHTCurrency').'</td>';
 		print '<td class="right">'.$langs->trans('Qty').'</td>';
-		if (!empty($conf->global->PRODUCT_USE_UNITS))
+		if (getDolGlobalString('PRODUCT_USE_UNITS'))
 		{
 			print '<td class="left">'.$langs->trans('Unit').'</td>';
 		}
 		print '<td class="right">'.$langs->trans('ReductionShort').'</td>';
+		print '<td class="right">'.$langs->trans('TotalHT').'</td>';	// Dolibarr 24 template prints this column
 		print '<td class="center">'.$form->showCheckAddButtons('checkforselect', 1).'</td>';
 		print '</tr>';
 		$i = 0;
@@ -761,7 +773,7 @@ class Commande2 extends Commande
 				$this->tpl['description'] = $langs->transnoentities("DiscountFromExcessPaid", $discount->getNomUrl(0));
 			} else {
 				$societe = new Societe($this->db);
-				$societe->fetch($line->array_options['options_supplier']);
+				$societe->fetch(isset($line->array_options['options_supplier']) ? (int) $line->array_options['options_supplier'] : 0);
 				$this->tpl['description'] = dol_trunc($societe->getNomUrl(1), 60);
 			}
 		} else {
@@ -774,15 +786,16 @@ class Commande2 extends Commande
 		if (!empty($line->vat_src_code) && !preg_match('/\(/', $this->tpl['vat_rate'])) $this->tpl['vat_rate'] .= ' ('.$line->vat_src_code.')';
 
 		$this->tpl['price'] = price($line->subprice);
+		$this->tpl['total_ht'] = price($line->total_ht);
 		$this->tpl['multicurrency_price'] = price($line->multicurrency_subprice);
 		if (!empty($line->array_options['options_spp'])) {
 			$this->tpl['multicurrency_price'] = $line->array_options['options_spp'];
 		}
 
 		$this->tpl['qty'] = (($line->info_bits & 2) != 2) ? $line->qty : '&nbsp;';
-		if (!empty($conf->global->PRODUCT_USE_UNITS)) $this->tpl['unit'] = $langs->transnoentities($line->getLabelOfUnit('long'));
+		if (getDolGlobalString('PRODUCT_USE_UNITS')) $this->tpl['unit'] = $line->getLabelOfUnit('long', $langs);
 
-		$this->tpl['remise_percent'] = (($line->info_bits & 2) != 2) ? vatrate($line->array_options['options_spd'], true) : '&nbsp;';
+		$this->tpl['remise_percent'] = (($line->info_bits & 2) != 2) ? vatrate(isset($line->array_options['options_spd']) ? (string) $line->array_options['options_spd'] : '', true) : '&nbsp;';
 
 		// Is the line strike or not
 		$this->tpl['strike'] = 0;
@@ -790,7 +803,7 @@ class Commande2 extends Commande
 
 		// Output template part (modules that overwrite templates must declare this into descriptor)
 		// Use global variables + $dateSelector + $seller and $buyer
-		$dirtpls = array_merge($conf->modules_parts['tpl'], array($defaulttpldir));
+		$dirtpls = array_merge(isset($conf->modules_parts['tpl']) ? $conf->modules_parts['tpl'] : array(), array($defaulttpldir));
 		foreach ($dirtpls as $module => $reldir)
 		{
 			if (!empty($module))
@@ -839,155 +852,9 @@ class SupplierProposal2 extends SupplierProposal
 	 */
 	public function updateline2($rowid, $pu, $qty, $remise_percent, $txtva, $txlocaltax1 = 0, $txlocaltax2 = 0, $desc = '', $price_base_type = 'HT', $info_bits = 0, $special_code = 0, $fk_parent_line = 0, $skip_update_total = 0, $fk_fournprice = 0, $pa_ht = 0, $label = '', $type = 0, $array_options = 0, $ref_supplier = '', $fk_unit = '', $pu_ht_devise = 0)
 	{
-		global $conf, $user, $langs, $mysoc;
-
-		dol_syslog(get_class($this)."::updateLine $rowid, $pu_ht, $qty, $remise_percent, $txtva, $desc, $price_base_type, $info_bits");
-		include_once DOL_DOCUMENT_ROOT.'/core/lib/price.lib.php';
-
-		// Clean parameters
-		$remise_percent = price2num($remise_percent);
-		$qty = price2num($qty);
-		$pu = price2num($pu);
-		if (!preg_match('/\((.*)\)/', $txtva)) {
-			$txtva = price2num($txtva); // $txtva can have format '5.0(XXX)' or '5'
-		}
-		$txlocaltax1 = price2num($txlocaltax1);
-		$txlocaltax2 = price2num($txlocaltax2);
-		$pa_ht = price2num($pa_ht);
-		if (empty($qty) && empty($special_code)) $special_code = 3; // Set option tag
-		if (!empty($qty) && $special_code == 3) $special_code = 0; // Remove option tag
-
-		if ($this->statut == 0)
-		{
-			$this->db->begin();
-
-			// Calcul du total TTC et de la TVA pour la ligne a partir de
-			// qty, pu, remise_percent et txtva
-			// TRES IMPORTANT: C'est au moment de l'insertion ligne qu'on doit stocker
-			// la part ht, tva et ttc, et ce au niveau de la ligne qui a son propre taux tva.
-
-			$localtaxes_type = getLocalTaxesFromRate($txtva, 0, $mysoc, $this->thirdparty);
-
-			// Clean vat code
-			$reg = array();
-			$vat_src_code = '';
-			if (preg_match('/\((.*)\)/', $txtva, $reg))
-			{
-				$vat_src_code = $reg[1];
-				$txtva = preg_replace('/\s*\(.*\)/', '', $txtva); // Remove code into vatrate.
-			}
-
-
-
-			$tabprice = calcul_price_total($qty, $pu, $remise_percent, $txtva, $txlocaltax1, $txlocaltax2, 0, $price_base_type, $info_bits, $type, $this->thirdparty, $localtaxes_type, 100, $this->multicurrency_tx, $pu_ht_devise);
-			$total_ht  = $tabprice[0];
-			$total_tva = $tabprice[1];
-			$total_ttc = $tabprice[2];
-			$total_localtax1 = $tabprice[9];
-			$total_localtax2 = $tabprice[10];
-			$pu_ht  = $tabprice[3];
-			$pu_tva = $tabprice[4];
-			$pu_ttc = $tabprice[5];
-			if (!empty($conf->multicurrency->enabled) && $pu_ht_devise > 0) {
-				$pu = $pu_ht;
-			}
-
-			// MultiCurrency
-			$multicurrency_total_ht  = $tabprice[16];
-			$multicurrency_total_tva = $tabprice[17];
-			$multicurrency_total_ttc = $tabprice[18];
-			$pu_ht_devise = $tabprice[19];
-
-			//Fetch current line from the database and then clone the object and set it in $oldline property
-			$line = new SupplierProposalLine($this->db);
-			$line->fetch($rowid);
-			$line->fetch_optionals();
-
-			// Stock previous line records
-			$staticline = clone $line;
-
-			$line->oldline = $staticline;
-			$this->line = $line;
-			$this->line->context = $this->context;
-
-			// Reorder if fk_parent_line change
-			if (!empty($fk_parent_line) && !empty($staticline->fk_parent_line) && $fk_parent_line != $staticline->fk_parent_line)
-			{
-				$rangmax = $this->line_max($fk_parent_line);
-				$this->line->rang = $rangmax + 1;
-			}
-
-			$this->line->id					= $rowid;
-			$this->line->label = $label;
-			$this->line->desc = $desc;
-			$this->line->qty				= $qty;
-			$this->line->product_type = $type;
-
-			$this->line->vat_src_code = $vat_src_code;
-			$this->line->tva_tx = $txtva;
-			$this->line->localtax1_tx		= $txlocaltax1;
-			$this->line->localtax2_tx		= $txlocaltax2;
-			$this->line->localtax1_type		= empty($localtaxes_type[0]) ? '' : $localtaxes_type[0];
-			$this->line->localtax2_type		= empty($localtaxes_type[2]) ? '' : $localtaxes_type[2];
-			$this->line->remise_percent		= $remise_percent;
-			$this->line->subprice			= $pu;
-			$this->line->info_bits			= $info_bits;
-			$this->line->total_ht			= $total_ht;
-			$this->line->total_tva			= $total_tva;
-			$this->line->total_localtax1	= $total_localtax1;
-			$this->line->total_localtax2	= $total_localtax2;
-			$this->line->total_ttc			= $total_ttc;
-			$this->line->special_code = $special_code;
-			$this->line->fk_parent_line		= $fk_parent_line;
-			$this->line->skip_update_total = $skip_update_total;
-			$this->line->ref_fourn = $ref_supplier;
-			$this->line->fk_unit = $fk_unit;
-
-			// infos marge
-			if (!empty($fk_product) && empty($fk_fournprice) && empty($pa_ht)) {
-				// by external module, take lowest buying price
-				include_once DOL_DOCUMENT_ROOT.'/fourn/class/fournisseur.product.class.php';
-				$productFournisseur = new ProductFournisseur($this->db);
-				$productFournisseur->find_min_price_product_fournisseur($fk_product);
-				$this->line->fk_fournprice = $productFournisseur->product_fourn_price_id;
-			} else {
-				$this->line->fk_fournprice = $fk_fournprice;
-			}
-			$this->line->pa_ht = $pa_ht;
-
-			if (is_array($array_options) && count($array_options) > 0) {
-				// We replace values in this->line->array_options only for entries defined into $array_options
-				foreach ($array_options as $key => $value) {
-					$this->line->array_options[$key] = $array_options[$key];
-				}
-			}
-
-			// Multicurrency
-			$this->line->multicurrency_subprice		= $pu_ht_devise;
-			$this->line->multicurrency_total_ht		= $multicurrency_total_ht;
-			$this->line->multicurrency_total_tva	= $multicurrency_total_tva;
-			$this->line->multicurrency_total_ttc	= $multicurrency_total_ttc;
-
-			$result = $this->line->update();
-			if ($result > 0)
-			{
-				// Reorder if child line
-				if (!empty($fk_parent_line)) $this->line_order(true, 'DESC');
-
-				$this->update_price(1);
-
-				$this->fk_supplier_proposal = $this->id;
-
-				$this->db->commit();
-				return $result;
-			} else {
-				$this->error = $this->db->error();
-				$this->db->rollback();
-				return -1;
-			}
-		} else {
-			dol_syslog(get_class($this)."::updateline Erreur -2 SupplierProposal en mode incompatible pour cette action");
-			return -2;
-		}
+		// Dolibarr 24: the Dolibarr 13 copy of updateline() kept here was only removing "$pu = 0" for foreign currency prices.
+		// Dolibarr 24 updateline() has the same signature, and the WINSOFT PATCH of supplier_proposal.class.php removes that reset,
+		// so the standard method is used (it also has the 24 fixes: vat code, line extrafields, triggers).
+		return parent::updateline($rowid, $pu, $qty, $remise_percent, $txtva, $txlocaltax1, $txlocaltax2, $desc, $price_base_type, $info_bits, $special_code, $fk_parent_line, $skip_update_total, $fk_fournprice, $pa_ht, $label, $type, (is_array($array_options) ? $array_options : array()), $ref_supplier, (int) $fk_unit, $pu_ht_devise);
 	}
 }
