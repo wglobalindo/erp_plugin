@@ -45,7 +45,7 @@ class modWinsoft extends DolibarrModules
 		$this->descriptionlong = "WinsoftDescription";
 		$this->editor_name = 'W Global Indo';
 		$this->editor_url = '';
-		$this->version = '24.0.2-2';
+		$this->version = '24.0.2-2';	// -2: product stats pages, extrafield label CSS
 		$this->const_name = 'MAIN_MODULE_'.strtoupper($this->name);
 		$this->picto = 'generic';
 
@@ -60,7 +60,8 @@ class modWinsoft extends DolibarrModules
 			'models' => 1,
 			'printing' => 0,
 			'theme' => 0,
-			'css' => array(),
+			// extra field label cells without word break (Dolibarr 13 core edit of commonobject.class.php)
+			'css' => array('/winsoft/css/winsoft.css'),
 			'js' => array(),
 			'hooks' => array(
 				'data' => array(

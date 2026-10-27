@@ -1,0 +1,11 @@
+/* Module Winsoft - CSS loaded on every page (module_parts 'css').
+ *
+ * Extra field labels: no break inside words, like the Dolibarr 13 core edit of
+ * htdocs/core/class/commonobject.class.php (removed class "wordbreak" from the label cell).
+ * Dolibarr 24 still adds "wordbreak" to the label cell of showOptionals(); this rule cancels it
+ * without changing the core. Value cells (valuefield*) are not touched.
+ */
+tr.trextrafields > td.wordbreak:not([class*="valuefield"]),
+div[class^="fieldline_options_"] > div.wordbreak {
+	word-break: normal;
+}
