@@ -499,7 +499,7 @@ if (empty($reshook)) {
 					$num = count($lines);
 
 					for ($i = 0; $i < $num; $i++) {
-						$desc = ($lines[$i]->desc ? $lines[$i]->desc : $lines[$i]->libelle);
+						$desc = ($lines[$i]->desc ? $lines[$i]->desc : $lines[$i]->product_label);
 						// If we build one invoice for several reception, we must put the ref of reception on the invoice line
 						if (!empty($createbills_onebythird)) {
 							$desc = dol_concatdesc($desc, $langs->trans("Reception").' '.$rcp->ref);

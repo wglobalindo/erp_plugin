@@ -230,7 +230,7 @@ if (($action == 'create' || $action == 'add') && !$error)
 								$label = '';
 								for ($i=0;$i<$num;$i++)
 								{
-									$desc=($lines[$i]->desc?$lines[$i]->desc:$lines[$i]->libelle);
+									$desc=($lines[$i]->desc?$lines[$i]->desc:$lines[$i]->product_label);
 									if ($lines[$i]->subprice < 0)
 									{
 										// Negative line, we create a discount line
@@ -650,8 +650,9 @@ if (($action != 'create' && $action != 'add') || ($action == 'create' && $error)
 			$generic_commande->id=$objp->rowid;
 			$generic_commande->ref=$objp->ref;
 			$generic_commande->statut = $objp->fk_statut;
+			$generic_commande->status = (int) $objp->fk_statut;	// Dolibarr 24: LibStatut() reads ->status
 			$generic_commande->date_commande = $db->jdate($objp->date_commande);
-			$generic_commande->date_livraison = $db->jdate($objp->date_livraison);
+			$generic_commande->delivery_date = $db->jdate($objp->date_livraison);
 
 			print '<table class="nobordernopadding"><tr class="nocellnopadd">';
 			print '<td class="nobordernopadding nowrap">';
@@ -694,8 +695,6 @@ if (($action != 'create' && $action != 'add') || ($action == 'create' && $error)
 
 			print '</tr>';
 
-			$total = $total + $objp->price;
-			$subtotal = $subtotal + $objp->price;
 			$i++;
 		}
 		print '</table>';

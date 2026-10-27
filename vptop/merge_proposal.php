@@ -284,7 +284,7 @@ if (($action == 'create' || $action == 'add') && !$error)
 								$label = '';
 								for ($i=0;$i<$num;$i++)
 								{
-									$desc=($lines[$i]->desc?$lines[$i]->desc:$lines[$i]->libelle);
+									$desc=($lines[$i]->desc?$lines[$i]->desc:$lines[$i]->product_label);
 									if ($lines[$i]->subprice < 0)
 									{
 										// Negative line, we create a discount line
@@ -618,7 +618,7 @@ if (($action != 'create' && $action != 'add') || ($action == 'create' && $error)
 
 	$sql = 'SELECT s.nom, s.rowid as socid, s.client, c.rowid, c.ref, c.total_ht, c.ref_client,';
 	//$sql.= ' c.date_valid, commande, c.date_livraison, c.fk_statut, c.facture as billed';
-	$sql.= ' c.date_valid, c.fin_validite, c.fk_statut';
+	$sql.= ' c.date_valid, c.fin_validite, c.date_livraison, c.fk_statut';
         foreach ($extrafields->attributes[$object->table_element]['label'] as $key => $val) 
         $sql .= ($extrafields->attributes[$object->table_element]['type'][$key] != 'separate' ? ", ef.".$key.' as options_'.$key : '');
 	$sql.= ' FROM '.MAIN_DB_PREFIX.'societe as s';
@@ -764,8 +764,9 @@ if (($action != 'create' && $action != 'add') || ($action == 'create' && $error)
 			$generic_commande->id=$objp->rowid;
 			$generic_commande->ref=$objp->ref;
 			$generic_commande->statut = $objp->fk_statut;
+			$generic_commande->status = (int) $objp->fk_statut;	// Dolibarr 24: LibStatut() reads ->status
 			$generic_commande->date_commande = $db->jdate($objp->date_valid);
-			$generic_commande->date_livraison = $db->jdate($objp->date_livraison);
+			$generic_commande->delivery_date = $db->jdate($objp->date_livraison);
             //Extra Fild
             $extralabels=$extrafields->fetch_name_optionals_label($generic_commande->table_element);
             $generic_commande->fetch_optionals($objp->rowid,$extralabels);
@@ -820,8 +821,6 @@ if (($action != 'create' && $action != 'add') || ($action == 'create' && $error)
 
 			print '</tr>';
 
-			$total = $total + $objp->price;
-			$subtotal = $subtotal + $objp->price;
 			$i++;
 		}
 		print '</table>';

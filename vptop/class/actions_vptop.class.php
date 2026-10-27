@@ -271,14 +271,17 @@ class ActionsVPtoP
 
 		}
 		if ($object->element=='propal') {
-
-			$object->fetchObjectLinked();
-			if (!empty($object->linkedObjectsIds['supplier_proposal']))
-			{
-				foreach ($object->linkedObjectsIds['supplier_proposal'] as $key => $value)
-				{
-					$parameters['clonedObj']->add_object_linked("supplier_proposal", $value);
-
+			// Clone of a customer proposal: copy the links to supplier proposals of the source proposal.
+			// Dolibarr 24 / bug fix: use the source given by the hook ('objFrom'), not the page object. The page object can hold
+			// the id of a supplier proposal (action new_customer_proposal), which linked the links of the customer proposal with the
+			// same id. Proposals made from a supplier proposal (class Utill) are already linked to it by create().
+			$objFrom = (isset($parameters['objFrom']) && is_object($parameters['objFrom'])) ? $parameters['objFrom'] : null;
+			if ($objFrom && get_class($objFrom) == 'Propal' && $objFrom->id > 0 && !empty($parameters['clonedObj'])) {
+				$objFrom->fetchObjectLinked();
+				if (!empty($objFrom->linkedObjectsIds['supplier_proposal'])) {
+					foreach ($objFrom->linkedObjectsIds['supplier_proposal'] as $key => $value) {
+						$parameters['clonedObj']->add_object_linked("supplier_proposal", $value);
+					}
 				}
 			}
 		}
@@ -947,7 +950,7 @@ class ActionsVPtoP
 								GETPOST('date_deliveryday', 'int'),
 								GETPOST('date_deliveryyear', 'int')
 							);
-							$date_delivery_old = (empty($object->delivery_date) ? $object->date_livraison : $object->delivery_date);
+							$date_delivery_old = $object->delivery_date;
 							if (!empty($date_delivery_old) && !empty($date_delivery))
 							{
 								//Attempt to get the date without possible hour rounding errors
@@ -960,7 +963,6 @@ class ActionsVPtoP
 								$difference = $date_delivery - $old_date_delivery;
 								if ($difference != 0)
 								{
-									$object->date_livraison = $date_delivery;
 									$object->delivery_date = $date_delivery;
 									foreach ($object->lines as $line)
 									{
