@@ -63,7 +63,7 @@ class Utils
 
 		$formconfirm.= '<form method="POST" action="'.$page.'" class="notoptoleftroright" enctype="multipart/form-data">'."\n";
 		$formconfirm.= '<input type="hidden" name="action" value="'.$action.'">';
-		$formconfirm.= '<input type="hidden" name="token" value="'.$_SESSION['newtoken'].'">'."\n";
+		$formconfirm.= '<input type="hidden" name="token" value="'.newToken().'">'."\n";
 
 		$formconfirm.= '<table width="100%" class="valid">'."\n";
 
@@ -131,11 +131,11 @@ class Utils
 
 			$filter = array('t.fk_product' => $prod->id,'t.fk_soc' => $object->thirdparty->id);
 
-			$result = $prodcustprice->fetch_all('', '', 0, 0, $filter);
+			$result = $prodcustprice->fetchAll('', '', 0, 0, $filter);
 			if ($result >= 0) {
 				if (count($prodcustprice->lines) > 0) {
-					$pu_ht = price($prodcustprice->lines[0]->price);
-					$pu_ttc = price($prodcustprice->lines[0]->price_ttc);
+					$pu_ht = $prodcustprice->lines[0]->price; // raw number (price() returns a formatted string)
+					$pu_ttc = $prodcustprice->lines[0]->price_ttc;
 					$price_base_type = $prodcustprice->lines[0]->price_base_type;
 					$prod->tva_tx = $prodcustprice->lines[0]->tva_tx;
 				} else {
@@ -266,6 +266,10 @@ class Utils
 	}
 	public static function addpropalLine_manual(Propal $object, $desc, $qty=1, $pu_ht=0, $cost=0)
 	{
+		global $langs;
+
+		// PHP 8: these were undefined (null) in the original code; keep the same values without warnings
+		$localtax1_tx = $localtax2_tx = $percent_remise = $price_base_type = $info_bits = $fk_unit = null;
 
 		// Insert line
 		$result = $object->addline(
@@ -299,7 +303,7 @@ class Utils
 
 
 		if ($result < 0) {
-			throw new Exception($langs->trans('ErrorAddpropalLine', $prod->ref));
+			throw new Exception($langs->trans('ErrorAddpropalLine', $desc));
 		}
 	}
 

@@ -35,7 +35,7 @@ class ActionsImportsupplierproposallines
 		$langs->load('importorderlines@importorderlines');
 
 		if ($object->statut < 1) {
-			print '<div class="inline-block divButAction"><a class="butAction" href="' . $_SERVER["PHP_SELF"] . '?id=' . $object->id . '&amp;action=import">' . $langs->trans('ImportLines') . '</a></div>';
+			print '<div class="inline-block divButAction"><a class="butAction" href="' . $_SERVER["PHP_SELF"] . '?id=' . $object->id . '&amp;action=import&amp;token=' . newToken() . '">' . $langs->trans('ImportLines') . '</a></div>';
 		}
 
 		return 0;
@@ -88,24 +88,26 @@ class ActionsImportsupplierproposallines
 					throw new Exception($langs->trans('UploadFileError'), $file['error']);
 				}
 
-				require __DIR__.'/../lib/phpoffice/phpexcel/Classes/PHPExcel.php';
+				// Dolibarr 24: PHPExcel (not PHP 8 compatible) replaced by PhpSpreadsheet shipped with Dolibarr
+				require_once DOL_DOCUMENT_ROOT.'/includes/phpoffice/phpspreadsheet/src/autoloader.php';
+				require_once DOL_DOCUMENT_ROOT.'/includes/Psr/autoloader.php';
 
-				//Supported PHPExcel File readers to ensure we deal with a Spreadsheet.
+				//Supported PhpSpreadsheet file readers to ensure we deal with a Spreadsheet.
 				$supported_filereaders = array(
-					'CSV',
-					'Excel2007',
-					'Excel5',
-					'OOCalc',
-					'Excel2003XML'
+					'Csv',
+					'Xlsx',
+					'Xls',
+					'Ods',
+					'Xml'
 				);
 
-				if (!in_array(PHPExcel_IOFactory::identify($file['tmp_name']), $supported_filereaders)) {
+				if (!in_array(\PhpOffice\PhpSpreadsheet\IOFactory::identify($file['tmp_name']), $supported_filereaders)) {
 					throw new Exception($langs->trans('UploadFileErrorUnsupportedFormat'));
 				}
 
 				try {
-					$excelfd = PHPExcel_IOFactory::load($file['tmp_name']);
-				} catch (PHPExcel_Reader_Exception $e) {
+					$excelfd = \PhpOffice\PhpSpreadsheet\IOFactory::load($file['tmp_name']);
+				} catch (\PhpOffice\PhpSpreadsheet\Reader\Exception $e) {
 					throw new Exception($e->getMessage());
 				}
 
@@ -125,14 +127,14 @@ class ActionsImportsupplierproposallines
 				$maxrow = $activesheet->getHighestRow();
 				for ($i = 2; $i <= $maxrow; $i++) {
 
-					$qty = (int) $activesheet->getCellByColumnAndRow(1, $i)->getValue();
+					$qty = (int) $activesheet->getCellByColumnAndRow(2, $i)->getValue();
 
 					if ($qty > 0) {
 
-						$ref = $activesheet->getCellByColumnAndRow(0, $i)->getValue();
-						$price = $activesheet->getCellByColumnAndRow(2, $i)->getValue();
-						$dec = $activesheet->getCellByColumnAndRow(3, $i)->getValue();
-						$unit = $activesheet->getCellByColumnAndRow(4, $i)->getValue();
+						$ref = $activesheet->getCellByColumnAndRow(1, $i)->getValue();
+						$price = $activesheet->getCellByColumnAndRow(3, $i)->getValue();
+						$dec = $activesheet->getCellByColumnAndRow(4, $i)->getValue();
+						$unit = $activesheet->getCellByColumnAndRow(5, $i)->getValue();
 
 						$prod = new Product($db);
 
@@ -185,7 +187,7 @@ class ActionsImportsupplierproposallines
 				$hideref = (! empty($conf->global->MAIN_GENERATE_DOCUMENTS_HIDE_REF) ? 1 : 0);
 
 				//commande_pdf_create($db, $object, $object->modelpdf, $outputlangs, $hidedetails, $hidedesc, $hideref);
-				$object->generateDocument($object->modelpdf, $outputlangs, $hidedetails, $hidedesc, $hideref);
+				$object->generateDocument($object->model_pdf, $outputlangs, $hidedetails, $hidedesc, $hideref);
 			}
 
 		}
