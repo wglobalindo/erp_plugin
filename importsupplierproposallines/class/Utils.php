@@ -60,7 +60,7 @@ class Utils
 
 		$formconfirm.= '<form method="POST" action="'.$page.'" class="notoptoleftroright" enctype="multipart/form-data">'."\n";
 		$formconfirm.= '<input type="hidden" name="action" value="'.$action.'">';
-		$formconfirm.= '<input type="hidden" name="token" value="'.$_SESSION['newtoken'].'">'."\n";
+		$formconfirm.= '<input type="hidden" name="token" value="'.newToken().'">'."\n";
 
 		$formconfirm.= '<table width="100%" class="valid">'."\n";
 
@@ -128,11 +128,11 @@ class Utils
 
 			$filter = array('t.fk_product' => $prod->id,'t.fk_soc' => $object->thirdparty->id);
 
-			$result = $prodcustprice->fetch_all('', '', 0, 0, $filter);
+			$result = $prodcustprice->fetchAll('', '', 0, 0, $filter);
 			if ($result >= 0) {
 				if (count($prodcustprice->lines) > 0) {
-					$pu_ht = price($prodcustprice->lines[0]->price);
-					$pu_ttc = price($prodcustprice->lines[0]->price_ttc);
+					$pu_ht = $prodcustprice->lines[0]->price; // raw number (price() returns a formatted string)
+					$pu_ttc = $prodcustprice->lines[0]->price_ttc;
 					$price_base_type = $prodcustprice->lines[0]->price_base_type;
 					$prod->tva_tx = $prodcustprice->lines[0]->tva_tx;
 				} else {
@@ -254,6 +254,11 @@ class Utils
 
 	public static function addOrderLine_manual(SupplierProposal $object, $desc, $qty, $pu_ht = 0, $remise_percent = 0, $unit = 0)
 	{
+		global $langs;
+
+		// PHP 8: these were undefined (null) in the original code; keep the same values without warnings
+		$tva_tx = $localtax1_tx = $localtax2_tx = $price_base_type = $pu_ttc = $tva_npr = $fournprice = $buyingprice = $label = $ref_supplier = $fk_unit = null;
+		$productsupplier = (object) array('id' => null);
 		$array_options =array('options_supplier'=>$object->socid, 'options_sp'=>$object->id, 'options_unit'=>$unit);
 		// Insert line
 		$result = $object->addline(
@@ -279,12 +284,12 @@ class Utils
 			$ref_supplier,
 			$fk_unit,
 			'',
-			$array_options,
+			0, // origin_id (was $array_options by mistake)
 			$pu_ht
 		);
 
 		if ($result < 0) {
-			throw new Exception($langs->trans('ErrorAddOrderLine', $prod->ref));
+			throw new Exception($langs->trans('ErrorAddOrderLine', $desc));
 		}
 	}
 

@@ -35,7 +35,7 @@ class ActionsImportorderlines
 		$langs->load('importorderlines@importorderlines');
 
 		if ($object->statut < 1) {
-			print '<div class="inline-block divButAction"><a class="butAction" href="' . $_SERVER["PHP_SELF"] . '?id=' . $object->id . '&amp;action=import">' . $langs->trans('ImportOrderLines') . '</a></div>';
+			print '<div class="inline-block divButAction"><a class="butAction" href="' . $_SERVER["PHP_SELF"] . '?id=' . $object->id . '&amp;action=import&amp;token=' . newToken() . '">' . $langs->trans('ImportOrderLines') . '</a></div>';
 		}
 
 		return 0;

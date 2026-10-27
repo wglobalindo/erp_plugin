@@ -128,11 +128,11 @@ class Utils
 
 			$filter = array('t.fk_product' => $prod->id,'t.fk_soc' => $object->thirdparty->id);
 
-			$result = $prodcustprice->fetch_all('', '', 0, 0, $filter);
+			$result = $prodcustprice->fetchAll('', '', 0, 0, $filter);
 			if ($result >= 0) {
 				if (count($prodcustprice->lines) > 0) {
-					$pu_ht = price($prodcustprice->lines[0]->price);
-					$pu_ttc = price($prodcustprice->lines[0]->price_ttc);
+					$pu_ht = $prodcustprice->lines[0]->price; // raw number (price() returns a formatted string)
+					$pu_ttc = $prodcustprice->lines[0]->price_ttc;
 					$price_base_type = $prodcustprice->lines[0]->price_base_type;
 					$prod->tva_tx = $prodcustprice->lines[0]->tva_tx;
 				} else {
@@ -253,6 +253,10 @@ class Utils
 	}
 	public static function addOrderLine_manual(Commande $object, $desc, $qty, $pu_ht = 0)
 	{
+		global $langs;
+
+		// PHP 8: these were undefined (null) in the original code; keep the same values without warnings
+		$localtax1_tx = $localtax2_tx = $percent_remise = $info_bits = $price_base_type = $pu_ttc = null;
 
 		// Insert line
 		$result = $object->addline(
@@ -282,7 +286,7 @@ class Utils
 		);
 
 		if ($result < 0) {
-			throw new Exception($langs->trans('ErrorAddOrderLine', $prod->ref));
+			throw new Exception($langs->trans('ErrorAddOrderLine', $desc));
 		}
 	}
 
