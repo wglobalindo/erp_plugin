@@ -1,0 +1,9 @@
+# Module Winsoft
+ModuleWinsoftName = Winsoft
+WinsoftDescription = Company customizations (PDF models, consumption tab columns)
+WinsoftSetup = Winsoft setup
+WinsoftSetupDesc = Options that can differ between companies sharing the same code.
+WinsoftSignatureOnPronew = Print signature image on proposal PDF "pronew"
+WinsoftSignatureOnPronewNoTax = Print signature image on proposal PDF "pronew_no_tax" (without tax)
+WinsoftSignatureFile = Signature image file: %s
+WinsoftUnitPriceCurrency = Unit price (currency)
