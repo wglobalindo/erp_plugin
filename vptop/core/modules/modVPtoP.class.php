@@ -72,7 +72,7 @@ class modVPtoP extends DolibarrModules
 		$this->editor_url = 'https://www.example.com';
 
 		// Possible values for version are: 'development', 'experimental', 'dolibarr', 'dolibarr_deprecated' or a version string like 'x.y.z'
-		$this->version = '1.0';
+		$this->version = '24.0.2-1';	// Dolibarr 24 port; free text line -> product
 		// Url to the file with your last numberversion of this module
 		//$this->url_last_version = 'http://www.example.com/versionmodule.txt';
 
@@ -89,6 +89,8 @@ class modVPtoP extends DolibarrModules
 		$this->module_parts = array(
 			
 			// Set here all hooks context managed by module. To find available hook context, make a "grep -r '>initHooks(' *" on source code. You can also set hook context to 'all'
+			// ORDER_SUPPLIER_VALIDATE: free text lines become stock products (core/triggers)
+			'triggers' => 1,
 			'hooks' => array(
 				'supplier_proposalcard',
 				'propalcard',
@@ -142,7 +144,11 @@ class modVPtoP extends DolibarrModules
 		// Example: $this->const=array(1 => array('VPTOP_MYNEWCONST1', 'chaine', 'myvalue', 'This is a constant to add', 1),
 		//                             2 => array('VPTOP_MYNEWCONST2', 'chaine', 'myvalue', 'This is another constant to add', 0, 'current', 1)
 		// );
-		$this->const = array();
+		// Constants are only inserted when missing, so a value already set is kept on re-activation.
+		$this->const = array(
+			0 => array('VPTOP_FREELINE_PRODUCT', 'chaine', '1', 'Free text lines of validated supplier orders become stock products (0 = off)', 0, 'current', 0),
+			1 => array('VPTOP_FREELINE_PRODUCT_PREFIX', 'chaine', 'FL', 'Ref prefix of products made from free text lines (prefix + yymm-nnnn)', 0, 'current', 0),
+		);
 
 		// Some keys to add into the overwriting translation tables
 		/*$this->overwrite_translation = array(

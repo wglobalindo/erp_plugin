@@ -47,6 +47,11 @@ function vptopAdminPrepareHead()
 	$h++;
 	*/
 
+	$head[$h][0] = dol_buildpath("/vptop/admin/freeline.php", 1);
+	$head[$h][1] = $langs->trans("VptopFreeLineTitle");
+	$head[$h][2] = 'freeline';
+	$h++;
+
 	$head[$h][0] = dol_buildpath("/vptop/admin/about.php", 1);
 	$head[$h][1] = $langs->trans("About");
 	$head[$h][2] = 'about';
