@@ -51,3 +51,26 @@ MyPageName = My page name
 #
 MyWidget = My widget
 MyWidgetDescription = My widget description
+
+#
+# Free text lines -> products
+#
+VptopFreeLineTitle = Free text lines -> products
+VptopFreeLineHelp = When a supplier order is validated, its free text lines (type product) are linked to a stock product: the product mapped to the same name below, or a new product with an automatic ref. The same product is set on the line of the customer order, so reception adds stock and shipment removes it. Names are compared without HTML, upper/lower case and extra spaces. Link similar names to one product here.
+VptopFreeLineStatus = Automatic product on supplier order validation
+VptopFreeLineUnmapped = Free text names without product
+VptopFreeLineName = Name (free text)
+VptopFreeLineSimilar = Similar names
+VptopFreeLineGroup = Group
+VptopFreeLineLinkSelectedTo = Link selected names to product
+VptopFreeLineNewProduct = new product named
+VptopFreeLineLink = Link
+VptopFreeLineMappings = Name -> product mappings
+VptopFreeLineApplyTitle = Apply mappings to past lines
+VptopFreeLineApplyHelp = Sets the mapped product on free text lines of past documents (only lines with a mapped name). No stock movement is made: stock of the past does not change. Set the starting stock with an inventory.
+VptopFreeLineApply = Apply
+VptopFreeLineApplied = Lines linked to a product:
+VptopFreeLineNoNameSelected = No name selected
+VptopFreeLineChooseProduct = Choose a product or type the name of a new product
+VptopFreeLineMapped = %s name(s) linked
+VptopFreeLineSuggested = Similar to mapped product
